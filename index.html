@@ -2,1424 +2,930 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Futura - StudyPath</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyPath - Interactive Mobile Prototype</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // "Kwity" palette remap — recolours the whole UI by overriding Tailwind's scales,
+        // so existing class names (slate/purple/emerald/amber...) render the new theme.
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        // Headings & "white" text become deep forest ink
+                        white: '#1b3a2d',
+                        // Cream "paper & ink" — high numbers = light surfaces, low = dark text
+                        slate: {
+                            50: '#16201a', 100: '#1d2f27', 200: '#243a30', 300: '#324a3f',
+                            400: '#51655a', 500: '#62766b', 600: '#7b8a80', 700: '#d3d6cb',
+                            800: '#faf8f2', 900: '#ece8dd', 950: '#f5f2e9'
+                        },
+                        // Lavender accent
+                        purple: {
+                            200: '#6a59a8', 300: '#7765bd', 400: '#8472c8', 500: '#a392d6',
+                            600: '#8d7ace', 900: '#b6a8df', 950: '#c9bee8'
+                        },
+                        indigo: { 500: '#9f8fd8', 900: '#b1a2dc' },
+                        // Forest green (success / brand)
+                        emerald: { 300: '#6f9c87', 400: '#437059', 500: '#3a5d4d', 950: '#2f4a3e' },
+                        // Coral (XP, streak, warm accents)
+                        amber: { 400: '#c06a6a', 500: '#e29393' },
+                        orange: { 400: '#c06a6a', 500: '#e29393' },
+                        rose: { 400: '#c06a6a', 500: '#d98a8a' },
+                        sky: { 500: '#e29393' }
+                    },
+                    fontFamily: {
+                        display: ['Fraunces', 'Georgia', 'serif']
+                    }
+                }
+            }
+        };
+    </script>
     <style>
-        :root {
-            --yellow: #FFF9A6; --yellow-dark: #FFE066; --yellow-light: #FFFACD; --yellow-tint: #FFFFE0;
-            --pink: #00C9A7; --pink-light: #E0FAF5; /* Correcting prompt mismatch: teal hex given for pink initially, but later law uses pink tones. We map standard colors. */
-            --true-pink: #FF6B9D; --true-pink-light: #FFEEF5;
-            --amber: #FFAB2E; --amber-light: #FFF4E0;
-            --blue: #3B9EFF; --blue-light: #EAF4FF;
-            --red: #FF5252; --red-light: #FFEBEB;
-            --green: #27AE60; --green-light: #E8F8EF;
-            --teal: #00C9A7; --teal-light: #E0FAF5;
-            --bg: #F5F4FF; --surface: #FFFFFF;
-            --border: rgba(108,99,255,0.12);
-            --shadow: 0 4px 24px rgba(108,99,255,0.10);
-            --dark-purple: #3A2F7D; --med-purple: #6C63FF;
-            --text-dark: #2D2A43; --text-muted: #6A6785;
-            
-            --border-rad-lg: 16px; --border-rad-md: 10px; --border-rad-sm: 6px;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: linear-gradient(135deg, #7d9588 0%, #9fae9f 45%, #e7e3d8 100%); }
+        /* Editorial serif for the prominent titles, matching the Kwity look */
+        h1, h2 { font-family: 'Fraunces', Georgia, serif; letter-spacing: -0.015em; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'DM Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
-        h1, h2, h3, h4, h5, .sora { font-family: 'Sora', sans-serif; }
-        body { background-color: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; color: var(--text-dark); }
-        
-        .layout { display: flex; width: 100%; max-width: 1040px; padding: 20px; gap: 40px; align-items: flex-start; justify-content: center; }
-        
-        /* Info Panel */
-        .info-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; max-width: 600px; }
-        .info-card { background: var(--surface); padding: 24px; border-radius: var(--border-rad-lg); border: 1px solid var(--border); box-shadow: var(--shadow); }
-        .info-card.gradient { background: linear-gradient(135deg, var(--med-purple), var(--dark-purple)); color: white; border: none; }
-        .info-card.teal { background: var(--teal-light); border-color: var(--teal); }
-        .info-card h3 { margin-bottom: 12px; font-size: 18px; }
-        .info-card p, .info-card li { font-size: 14px; line-height: 1.5; margin-bottom: 8px; color: var(--text-muted); }
-        .info-card.gradient p { color: rgba(255,255,255,0.9); }
-        .info-card.teal p { color: #007A65; }
-        .info-card ul, .info-card ol { padding-left: 20px; }
-        .badge-list { display: flex; flex-direction: column; gap: 10px; }
-        .badge-item { display: flex; align-items: center; gap: 10px; font-size: 14px; }
-        .badge-dot { width: 12px; height: 12px; border-radius: 50%; }
-        .btn-info { background: white; color: var(--dark-purple); border: none; padding: 10px 16px; border-radius: var(--border-rad-md); font-weight: bold; cursor: pointer; margin-top: 10px; font-family: 'Sora', sans-serif; }
+        /* Animations (these were referenced in the original but never defined) */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fadeIn { animation: fadeIn 0.35s ease-out; }
 
-        /* Phone Frame */
-        .phone { width: 320px; height: 700px; background: var(--surface); border-radius: 40px; border: 2px solid rgba(108,99,255,0.2); box-shadow: 0 20px 60px rgba(108,99,255,0.18), 0 4px 12px rgba(0,0,0,0.06); position: relative; overflow: hidden; display: flex; flex-direction: column; flex-shrink: 0; }
-        
-        .status-bar { height: 30px; background: var(--dark-purple); color: white; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; font-size: 12px; font-weight: 500; z-index: 100; position: relative; }
-        
-        .app-content { flex: 1; overflow-y: auto; overflow-x: hidden; position: relative; scroll-behavior: smooth; }
-        .app-content::-webkit-scrollbar { display: none; }
-        
-        .bottom-nav { height: 60px; background: var(--surface); border-top: 1px solid var(--border); display: none; justify-content: space-around; align-items: center; z-index: 100; }
-        .nav-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 20%; color: var(--text-muted); cursor: pointer; font-size: 10px; gap: 4px; opacity: 0.6; transition: 0.2s; }
-        .nav-btn.active { color: var(--med-purple); opacity: 1; font-weight: bold; }
-        .nav-btn svg { width: 20px; height: 20px; fill: currentColor; }
-        
-        /* Shared UI Elements */
-        .btn { width: 100%; padding: 14px; border: none; border-radius: var(--border-rad-md); font-size: 15px; font-weight: bold; cursor: pointer; font-family: 'Sora', sans-serif; transition: opacity 0.2s; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-primary { background: var(--med-purple); color: white; }
-        .input-text { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: var(--border-rad-md); font-size: 14px; margin-bottom: 12px; outline: none; }
-        .input-text:focus { border-color: var(--med-purple); }
-        .screen { display: none; min-height: 100%; flex-direction: column; }
-        .screen.active { display: flex; }
-        .pad { padding: 20px; }
-        .row { display: flex; align-items: center; gap: 10px; }
-        
-        /* Onboarding */
-        #onboarding { background: linear-gradient(180deg, var(--dark-purple) 0%, var(--med-purple) 100%); color: white; display: flex; flex-direction: column; }
-        .ob-header { text-align: center; padding: 40px 20px 20px; }
-        .logo-box { width: 52px; height: 52px; background: rgba(255,255,255,0.2); border-radius: 12px; margin: 0 auto 10px; display: flex; justify-content: center; align-items: center; }
-        .ob-tag { font-size: 12px; opacity: 0.8; margin-top: 4px; }
-        .ob-step { flex: 1; background: var(--surface); color: var(--text-dark); border-radius: 24px 24px 0 0; padding: 24px; display: none; flex-direction: column; }
-        .ob-step.active { display: flex; }
-        .step-ind { font-size: 12px; color: var(--text-muted); font-weight: bold; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 1px; }
-        
-        /* Career Grid */
-        .career-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
-        .career-card { padding: 16px 12px; border: 2px solid var(--border); border-radius: var(--border-rad-md); text-align: center; cursor: pointer; transition: 0.2s; background: rgba(255,255,255,0.5); }
-        .career-card.full { grid-column: span 2; }
-        .career-card.selected { border-color: var(--med-purple); background: white; box-shadow: 0 4px 12px rgba(108,99,255,0.15); }
-        .c-icon { font-size: 24px; margin-bottom: 8px; }
-        .c-title { font-size: 14px; font-weight: bold; margin-bottom: 4px; font-family: 'Sora', sans-serif; }
-        .c-sub { font-size: 11px; color: var(--text-muted); }
+        @keyframes toastIn { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
+        @keyframes toastOut { to { opacity: 0; transform: translate(-50%, 20px); } }
 
-        /* Course Setup */
-        .course-row { margin-bottom: 16px; }
-        .day-btns { display: flex; gap: 6px; }
-        .day-btn { flex: 1; padding: 8px 0; text-align: center; font-size: 12px; border-radius: var(--border-rad-sm); background: var(--bg); color: var(--text-muted); cursor: pointer; border: 1px solid var(--border); }
-        .day-btn.active { background: white; color: var(--med-purple); border-color: var(--med-purple); font-weight: bold; }
-        .add-course { border: 2px dashed var(--border); background: transparent; color: var(--med-purple); margin-bottom: 24px; }
+        @keyframes popIn { 0% { transform: scale(0.7); opacity: 0; } 60% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
+        .animate-popIn { animation: popIn 0.4s cubic-bezier(.18,.89,.32,1.28); }
 
-        /* Month Cal Setup */
-        .mini-cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-bottom: 20px; }
-        .mini-cal-day { aspect-ratio: 1; border-radius: 4px; display: flex; justify-content: center; align-items: center; font-size: 10px; color: var(--text-muted); background: var(--bg); position: relative; }
-        .type-btns { display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; }
-        .type-btns::-webkit-scrollbar { display: none; }
-        .type-btn { padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; cursor: pointer; white-space: nowrap; border: 1px solid transparent; opacity: 0.6; }
-        .type-btn.active { opacity: 1; }
+        @keyframes xpFloat { 0% { opacity: 0; transform: translateY(0) scale(0.8); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(-40px) scale(1.1); } }
 
-        /* Main Headers */
-        .main-header { padding: 24px 20px; color: white; }
-        .main-header h2 { font-size: 20px; margin-bottom: 4px; }
-        .main-header p { font-size: 13px; opacity: 0.9; margin-bottom: 16px; }
-        .xp-bar-bg { height: 8px; background: rgba(255,255,255,0.3); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
-        .xp-bar-fill { height: 100%; background: white; width: 0%; transition: width 0.5s; }
-        .xp-labels { display: flex; justify-content: space-between; font-size: 11px; font-weight: bold; }
-
-        /* Stats Row */
-        .stats-row { display: flex; gap: 10px; padding: 20px; margin-top: -20px; position: relative; z-index: 10; }
-        .stat-cell { flex: 1; background: var(--surface); padding: 12px 8px; border-radius: var(--border-rad-md); box-shadow: var(--shadow); text-align: center; border: 1px solid var(--border); }
-        .stat-val { font-size: 18px; font-weight: bold; color: var(--med-purple); font-family: 'Sora', sans-serif; }
-        .stat-lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; margin-top: 4px; }
-
-        /* Sections */
-        .section { padding: 0 20px 24px; }
-        .sec-title { font-size: 15px; margin-bottom: 12px; color: var(--text-dark); }
-        
-        /* Quest Cards */
-        .quest-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--border-rad-lg); padding: 16px; margin-bottom: 12px; position: relative; overflow: hidden; cursor: pointer; }
-        .quest-card.done { opacity: 0.6; }
-        .q-sub { font-size: 14px; font-weight: bold; margin-bottom: 4px; font-family: 'Sora', sans-serif; }
-        .q-conn { font-size: 12px; color: var(--text-muted); line-height: 1.4; padding-right: 40px;}
-        .q-xp { position: absolute; top: 16px; right: 16px; padding: 4px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
-        .q-expand { display: none; margin-top: 16px; border-top: 1px solid var(--border); padding-top: 16px; }
-        .quest-card.expanded .q-expand { display: block; }
-        .chal-box { padding: 12px; border-radius: var(--border-rad-md); margin-bottom: 10px; font-size: 13px; line-height: 1.5; }
-        .missed-block { background: var(--amber-light); border: 1px solid var(--amber); padding: 10px; border-radius: var(--border-rad-md); font-size: 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; color: #8F5900; }
-
-        /* Upcoming / Calendar */
-        .event-item { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--border-rad-md); padding: 12px; margin-bottom: 8px; }
-        .e-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-        .e-info { flex: 1; }
-        .e-title { font-size: 13px; font-weight: bold; margin-bottom: 2px; }
-        .e-date { font-size: 11px; color: var(--text-muted); }
-        .e-badge { padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
-
-        .cal-nav { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; font-family: 'Sora', sans-serif; font-weight: bold; }
-        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; padding: 0 20px; text-align: center; }
-        .cal-hdr { font-size: 10px; color: var(--text-muted); font-weight: bold; margin-bottom: 8px; }
-        .cal-cell { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; padding-top: 4px; font-size: 12px; border-radius: var(--border-rad-sm); cursor: pointer; border: 1px solid transparent; }
-        .cal-cell.today { border-color: var(--med-purple); font-weight: bold; color: var(--med-purple); }
-        .cal-cell.sel { background: var(--border); }
-        .cal-dots { display: flex; gap: 2px; margin-top: 4px; }
-        .cal-dot { width: 4px; height: 4px; border-radius: 50%; }
-        .cal-panel { background: var(--bg); padding: 20px; margin-top: 16px; border-top: 1px solid var(--border); }
-
-        /* Study Plan */
-        .plan-prog { background: var(--surface); padding: 20px; border-bottom: 1px solid var(--border); }
-        .plan-prog-bar { height: 6px; background: var(--bg); border-radius: 3px; margin: 10px 0; overflow: hidden; }
-        .plan-prog-fill { height: 100%; background: var(--green); width: 0%; transition: 0.3s; }
-        .week-tabs { display: flex; gap: 10px; padding: 16px 20px; overflow-x: auto; }
-        .week-tabs::-webkit-scrollbar { display: none; }
-        .week-tab { padding: 6px 16px; border-radius: 20px; background: var(--surface); border: 1px solid var(--border); font-size: 12px; font-weight: bold; cursor: pointer; white-space: nowrap; }
-        .week-tab.active { background: var(--dark-purple); color: white; border-color: var(--dark-purple); }
-        .filter-row { padding: 0 20px 10px; display: flex; gap: 8px; }
-        .filter-btn { font-size: 11px; padding: 4px 10px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); cursor: pointer; }
-        .filter-btn.active { background: var(--border); font-weight: bold; }
-        
-        .plan-item { display: flex; align-items: flex-start; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--border-rad-md); padding: 12px; margin: 0 20px 10px; }
-        .cb { width: 20px; height: 20px; border: 2px solid var(--border); border-radius: 4px; flex-shrink: 0; cursor: pointer; display: flex; justify-content: center; align-items: center; }
-        .plan-item.done .cb { background: var(--green); border-color: var(--green); }
-        .plan-item.done .cb::after { content: '✓'; color: white; font-size: 12px; font-weight: bold; }
-        .plan-item.done .p-title { text-decoration: line-through; color: var(--text-muted); }
-        .p-info { flex: 1; }
-        .p-title { font-size: 13px; font-weight: bold; margin-bottom: 4px; line-height: 1.3; }
-        .p-meta { font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between; }
-        .p-pri { padding: 2px 6px; border-radius: 4px; font-size: 9px; text-transform: uppercase; font-weight: bold; }
-
-        /* Check-in */
-        .streak-banner { background: var(--green-light); border: 1px solid var(--green); border-radius: var(--border-rad-lg); padding: 20px; text-align: center; margin: 20px; color: #1E824C; }
-        .streak-num { font-size: 32px; font-weight: bold; font-family: 'Sora', sans-serif; margin: 8px 0; }
-        .mood-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 24px; }
-        .mood-btn { aspect-ratio: 1; background: var(--surface); border: 2px solid var(--border); border-radius: var(--border-rad-md); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; transition: 0.2s; }
-        .mood-btn span { font-size: 11px; font-weight: bold; margin-top: 6px; color: var(--text-dark); }
-        .mood-btn.active { border-color: var(--med-purple); background: var(--bg); box-shadow: var(--shadow); transform: scale(1.05); }
-        .reason-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
-        .reason-pill { padding: 12px; text-align: center; background: var(--surface); border: 1px solid var(--border); border-radius: var(--border-rad-md); font-size: 12px; font-weight: bold; cursor: pointer; }
-        .reason-pill.active { background: var(--med-purple); color: white; border-color: var(--med-purple); }
-        .reason-pill.all-good.active { background: var(--green); border-color: var(--green); }
-
-        /* Catchups */
-        .cu-item { background: var(--surface); border: 1px solid var(--border); border-radius: var(--border-rad-lg); padding: 16px; margin-bottom: 16px; }
-        .cu-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .cu-title { font-size: 15px; font-weight: bold; font-family: 'Sora', sans-serif; }
-        .cu-dur { font-size: 11px; color: var(--text-muted); background: var(--bg); padding: 4px 8px; border-radius: 12px; }
-        .cu-upload { border: 2px dashed var(--border); border-radius: var(--border-rad-md); padding: 24px; text-align: center; cursor: pointer; background: var(--bg); margin-top: 12px; }
-        .cu-upload:hover { border-color: var(--amber); }
-        .cu-spin { margin: 20px auto; width: 30px; height: 30px; border: 3px solid var(--border); border-top-color: var(--amber); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        
-        .lesson-block { background: var(--bg); border-radius: var(--border-rad-md); overflow: hidden; margin-top: 12px; border: 1px solid var(--border); }
-        .lb-hdr { background: var(--dark-purple); color: white; padding: 12px; font-size: 14px; font-weight: bold; display: flex; gap: 8px; align-items: center; }
-        .lb-body { padding: 16px; font-size: 13px; line-height: 1.5; color: var(--text-dark); }
-        .lb-body h4 { font-size: 14px; margin: 12px 0 6px; color: var(--dark-purple); }
-        .lb-body h4:first-child { margin-top: 0; }
-        .lb-body ul { padding-left: 20px; margin-bottom: 12px; }
-        .lb-career { font-style: italic; color: var(--med-purple); padding: 10px; background: rgba(108,99,255,0.1); border-radius: 6px; margin-top: 12px; }
-        
-        .quiz-q { margin-top: 16px; font-weight: bold; font-size: 14px; }
-        .quiz-opt { padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--border-rad-sm); margin-top: 8px; font-size: 13px; cursor: pointer; background: var(--surface); transition: 0.2s; }
-        .quiz-opt.sel { border-color: var(--med-purple); background: var(--bg); font-weight: bold; }
-        .quiz-opt.corr { background: var(--green-light); border-color: var(--green); color: #1E824C; }
-        .quiz-opt.wrong { background: var(--red-light); border-color: var(--red); color: #B31010; }
-        .quiz-res { margin-top: 16px; text-align: center; font-weight: bold; font-size: 16px; color: var(--med-purple); }
-
-        /* Profile */
-        .prof-hdr { text-align: center; padding: 32px 20px; color: white; }
-        .avatar { width: 80px; height: 80px; border-radius: 50%; background: white; margin: 0 auto 12px; display: flex; justify-content: center; align-items: center; font-size: 28px; font-weight: bold; font-family: 'Sora', sans-serif; }
-        .prof-name { font-size: 20px; font-weight: bold; font-family: 'Sora', sans-serif; margin-bottom: 4px; }
-        .prof-rank { display: inline-block; padding: 4px 12px; background: rgba(0,0,0,0.2); border-radius: 12px; font-size: 11px; font-weight: bold; text-transform: uppercase; margin-top: 8px; }
-        
-        .tl-cont { padding: 20px; position: relative; }
-        .tl-line { position: absolute; left: 31px; top: 20px; bottom: 20px; width: 2px; background: var(--border); }
-        .tl-item { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; position: relative; z-index: 2; }
-        .tl-dot { width: 24px; height: 24px; border-radius: 50%; background: var(--surface); border: 2px solid var(--border); flex-shrink: 0; }
-        .tl-item.done .tl-dot { background: currentColor; border-color: currentColor; }
-        .tl-item.curr .tl-dot { background: var(--surface); border-color: currentColor; border-width: 4px; }
-        .tl-lbl { font-size: 13px; color: var(--text-muted); }
-        .tl-item.done .tl-lbl { color: var(--text-dark); font-weight: 500; }
-        .tl-item.curr .tl-lbl { font-weight: bold; color: var(--text-dark); font-size: 14px; }
-        .tl-here { font-size: 10px; color: currentColor; font-weight: bold; margin-left: 8px; text-transform: uppercase; }
-
-        /* XP Gain Overlay */
-        #xp-screen { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(135deg, var(--dark-purple), var(--med-purple)); z-index: 200; display: none; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; padding: 20px; }
-        #xp-screen.active { display: flex; }
-        .xp-star { width: 80px; height: 80px; background: rgba(255,255,255,0.2); border-radius: 20px; display: flex; justify-content: center; align-items: center; font-size: 40px; margin-bottom: 24px; }
-        .xp-val { font-size: 48px; font-weight: bold; font-family: 'Sora', sans-serif; margin-bottom: 8px; }
-        .xp-msg { font-size: 18px; font-weight: bold; margin-bottom: 8px; font-family: 'Sora', sans-serif; }
-        .xp-sub { font-size: 14px; opacity: 0.8; margin-bottom: 32px; }
-
-        @media (max-width: 680px) {
-            .layout { padding: 0; }
-            .info-panel { display: none; }
-            .phone { width: 100%; height: 100vh; border-radius: 0; border: none; box-shadow: none; }
-        }
+        @keyframes confettiFall { to { transform: translateY(120px) rotate(360deg); opacity: 0; } }
     </style>
 </head>
-<body>
+<body class="flex justify-center items-center min-h-screen p-4 text-slate-100">
 
-<div class="layout">
-    <div class="phone">
-        <div class="status-bar">
-            <span id="live-time">12:00</span>
-            <span>Futura</span>
-            <span>100%</span>
-        </div>
-        
-        <div class="app-content">
-            <div id="onboarding" class="screen active">
-                <div class="ob-header">
-                    <div class="logo-box">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
-                    </div>
-                    <h1 style="font-size: 28px;">Futura</h1>
-                    <div class="ob-tag">Your school journey, your career</div>
-                </div>
-                
-                <div id="ob-step-1" class="ob-step active">
-                    <div class="step-ind">Step 1 of 3</div>
-                    <h2 style="font-size: 20px; margin-bottom: 8px;">Choose your path</h2>
-                    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Pick a dream career. We'll map your classes to it.</p>
-                    <div class="career-grid" id="career-grid"></div>
-                    <div style="flex:1"></div>
-                    <button class="btn btn-primary" id="btn-ob-1" disabled onclick="nextOb(2)">Next</button>
-                </div>
+    <!-- Mobile Device Mockup Container -->
+    <div class="relative w-full max-w-[412px] h-[844px] bg-slate-900 rounded-[50px] shadow-2xl border-[12px] border-[#2e4a3d] flex flex-col overflow-hidden">
 
-                <div id="ob-step-2" class="ob-step">
-                    <div class="step-ind">Step 2 of 3</div>
-                    <h2 style="font-size: 20px; margin-bottom: 8px;">Your courses</h2>
-                    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">What are you studying this term?</p>
-                    <div id="course-list"></div>
-                    <button class="btn add-course" onclick="addCourseRow()">+ Add another course</button>
-                    <div style="flex:1"></div>
-                    <button class="btn btn-primary" onclick="saveCoursesAndNext()">Next</button>
-                </div>
-
-                <div id="ob-step-3" class="ob-step">
-                    <div class="step-ind">Step 3 of 3</div>
-                    <h2 style="font-size: 20px; margin-bottom: 8px;">Upcoming events</h2>
-                    <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Log tests and assignments. Earn 5 XP for each!</p>
-                    <div class="mini-cal" id="ob-mini-cal"></div>
-                    
-                    <input type="text" class="input-text" id="ob-ev-title" placeholder="Event title (e.g., Chapter 4 Test)">
-                    <input type="date" class="input-text" id="ob-ev-date">
-                    
-                    <div class="type-btns" id="ob-type-btns">
-                        <div class="type-btn active" style="background:var(--red-light); color:var(--red); border-color:var(--red)" onclick="setObEvType('test', this)">Test</div>
-                        <div class="type-btn" style="background:var(--true-pink-light); color:var(--true-pink)" onclick="setObEvType('quiz', this)">Quiz</div>
-                        <div class="type-btn" style="background:var(--amber-light); color:var(--amber)" onclick="setObEvType('homework', this)">Homework</div>
-                        <div class="type-btn" style="background:var(--blue-light); color:var(--blue)" onclick="setObEvType('class', this)">Class</div>
-                        <div class="type-btn" style="background:var(--teal-light); color:var(--teal)" onclick="setObEvType('other', this)">Other</div>
-                    </div>
-                    
-                    <button class="btn" style="background:var(--bg); color:var(--text-dark); margin-bottom: 16px; border: 1px solid var(--border);" onclick="addObEvent()">+ Add event (5 XP)</button>
-                    
-                    <div style="font-size: 12px; color: var(--text-muted); text-align: center; margin-bottom: 20px;" id="ob-ev-stats">0 events added • 0 XP earned</div>
-                    
-                    <div style="flex:1"></div>
-                    <button class="btn btn-primary" onclick="finishOnboarding()">Start my journey</button>
-                </div>
-            </div>
-
-            <div id="tab-home" class="screen">
-                <div class="main-header" id="home-hdr">
-                    <p id="home-greet">Future Business Leader</p>
-                    <h2 id="home-name">Alex Smith</h2>
-                    <div style="display:inline-block; padding:4px 10px; background:rgba(0,0,0,0.2); border-radius:12px; font-size:11px; font-weight:bold; margin: 8px 0 16px;" id="home-rank">INTERN</div>
-                    <div class="xp-bar-bg"><div class="xp-bar-fill" id="home-xp-fill"></div></div>
-                    <div class="xp-labels">
-                        <span id="home-xp-tot">220 XP</span>
-                        <span id="home-streak-lbl">🔥 0 Day Streak</span>
-                    </div>
-                </div>
-                <div class="stats-row">
-                    <div class="stat-cell">
-                        <div class="stat-val" id="stat-streak">0</div>
-                        <div class="stat-lbl">Streak</div>
-                    </div>
-                    <div class="stat-cell">
-                        <div class="stat-val" id="stat-quests">0</div>
-                        <div class="stat-lbl">Quests</div>
-                    </div>
-                    <div class="stat-cell">
-                        <div class="stat-val" id="stat-xp">220</div>
-                        <div class="stat-lbl">Total XP</div>
-                    </div>
-                </div>
-                
-                <div class="section" style="margin-top: 10px;">
-                    <div class="sec-title sora"><b>Today's quests</b></div>
-                    <div id="home-quests"></div>
-                </div>
-                
-                <div class="section">
-                    <div class="sec-title sora"><b>Upcoming events</b></div>
-                    <div id="home-events"></div>
-                </div>
-                
-                <div class="section">
-                    <div style="background:var(--amber-light); border:1px solid var(--amber); border-radius:var(--border-rad-lg); padding:16px; cursor:pointer;" onclick="switchTab('catchup')">
-                        <div style="font-weight:bold; color:#8F5900; margin-bottom:4px; font-family:'Sora',sans-serif;">Missed a class?</div>
-                        <div style="font-size:12px; color:#A66800;">Head to the Catch-up centre to turn your notes into XP. &rarr;</div>
-                    </div>
-                </div>
-                <div style="height: 20px;"></div>
-            </div>
-
-            <div id="tab-calendar" class="screen">
-                <div class="main-header" style="background: var(--dark-purple);">
-                    <h2>Calendar</h2>
-                    <p>Plan your studies around your events.</p>
-                </div>
-                <div class="cal-nav">
-                    <span style="font-size: 20px; cursor: pointer; padding: 0 10px;" onclick="changeMonth(-1)">‹</span>
-                    <span id="cal-month-lbl">June 2026</span>
-                    <span style="font-size: 20px; cursor: pointer; padding: 0 10px;" onclick="changeMonth(1)">›</span>
-                </div>
-                <div class="cal-grid">
-                    <div class="cal-hdr">Su</div><div class="cal-hdr">Mo</div><div class="cal-hdr">Tu</div><div class="cal-hdr">We</div><div class="cal-hdr">Th</div><div class="cal-hdr">Fr</div><div class="cal-hdr">Sa</div>
-                </div>
-                <div class="cal-grid" id="cal-days"></div>
-                
-                <div class="cal-panel" id="cal-panel">
-                    <div class="sec-title sora"><b id="cal-sel-date-lbl">Events</b></div>
-                    <div id="cal-day-events" style="margin-bottom: 20px;"></div>
-                    
-                    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: var(--border-rad-md); padding: 16px;">
-                        <div style="font-size: 13px; font-weight: bold; margin-bottom: 12px;">Add Event</div>
-                        <input type="text" class="input-text" id="cal-ev-title" placeholder="Event title">
-                        <select class="input-text" id="cal-ev-course">
-                            <option value="">No specific course</option>
-                        </select>
-                        <div class="type-btns" id="cal-type-btns">
-                            <div class="type-btn active" style="background:var(--red-light); color:var(--red); border-color:var(--red)" onclick="setCalEvType('test', this)">Test</div>
-                            <div class="type-btn" style="background:var(--true-pink-light); color:var(--true-pink)" onclick="setCalEvType('quiz', this)">Quiz</div>
-                            <div class="type-btn" style="background:var(--amber-light); color:var(--amber)" onclick="setCalEvType('homework', this)">HW</div>
-                        </div>
-                        <button class="btn btn-primary" style="padding: 10px;" onclick="addCalEvent()">Add & Earn 5 XP</button>
-                    </div>
-                </div>
-                <div class="section" style="margin-top: 20px;">
-                    <div class="sec-title sora"><b>All events this month</b></div>
-                    <div id="cal-all-events"></div>
-                </div>
-                <div style="height: 20px;"></div>
-            </div>
-
-            <div id="tab-plan" class="screen">
-                <div class="main-header" style="background: var(--dark-purple);">
-                    <h2>Study Plan</h2>
-                    <p>Auto-generated from your calendar.</p>
-                </div>
-                <div class="plan-prog">
-                    <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:bold;">
-                        <span>Plan Progress</span>
-                        <span id="plan-prog-pct">0%</span>
-                    </div>
-                    <div class="plan-prog-bar"><div class="plan-prog-fill" id="plan-prog-fill"></div></div>
-                </div>
-                <div class="week-tabs" id="plan-weeks"></div>
-                <div class="filter-row">
-                    <div class="filter-btn active" onclick="setPlanFilter('all', this)">All</div>
-                    <div class="filter-btn" onclick="setPlanFilter('homework', this)">Homework</div>
-                    <div class="filter-btn" onclick="setPlanFilter('study', this)">Study</div>
-                    <div class="filter-btn" onclick="setPlanFilter('review', this)">Review</div>
-                </div>
-                <div id="plan-list" style="padding-bottom: 20px;"></div>
-            </div>
-
-            <div id="tab-checkin" class="screen">
-                <div class="main-header" style="background: var(--dark-purple);">
-                    <h2>Check-in</h2>
-                    <p>Track your well-being.</p>
-                </div>
-                <div class="streak-banner">
-                    <div style="font-size: 13px; font-weight: bold; text-transform: uppercase;">Current Streak</div>
-                    <div class="streak-num" id="ci-streak">0</div>
-                    <div style="font-size: 13px;">Keep showing up!</div>
-                </div>
-                <div class="section">
-                    <div class="sec-title sora"><b>How are you feeling today?</b></div>
-                    <div class="mood-grid">
-                        <div class="mood-btn" onclick="selMood(this)">😁<span style="color:var(--green)">Great</span></div>
-                        <div class="mood-btn" onclick="selMood(this)">🙂<span style="color:var(--green)">Ok</span></div>
-                        <div class="mood-btn" onclick="selMood(this)">😐<span style="color:var(--amber)">Meh</span></div>
-                        <div class="mood-btn" onclick="selMood(this)">😫<span style="color:var(--red)">Rough</span></div>
-                    </div>
-                    <div class="sec-title sora"><b>What's going on?</b></div>
-                    <div class="reason-grid">
-                        <div class="reason-pill" onclick="this.classList.toggle('active')">Health/sick</div>
-                        <div class="reason-pill" onclick="this.classList.toggle('active')">Classes boring</div>
-                        <div class="reason-pill" onclick="this.classList.toggle('active')">Stressed/anxious</div>
-                        <div class="reason-pill" onclick="this.classList.toggle('active')">Fell behind</div>
-                        <div class="reason-pill" onclick="this.classList.toggle('active')">Family issues</div>
-                        <div class="reason-pill all-good" onclick="this.classList.toggle('active')">All good</div>
-                    </div>
-                    <button class="btn btn-primary" onclick="logCheckin()">Log Check-in (10 XP)</button>
-                </div>
-            </div>
-
-            <div id="tab-catchup" class="screen">
-                <div class="main-header" style="background: #5A3E1B;">
-                    <h2>Catch-up Centre</h2>
-                    <p>Turn missed classes into career XP.</p>
-                </div>
-                <div class="section" style="padding-top: 20px;" id="cu-list"></div>
-                <input type="file" id="cu-file-input" style="display:none" accept=".pdf,.txt,.doc,.docx,image/*">
-            </div>
-
-            <div id="tab-profile" class="screen">
-                <div class="prof-hdr" id="prof-hdr">
-                    <div class="avatar" id="prof-av">A</div>
-                    <div class="prof-name">Alex Smith</div>
-                    <div style="font-size:13px; opacity:0.9;" id="prof-career">Business Path</div>
-                    <div class="prof-rank" id="prof-rank-lbl">Intern</div>
-                </div>
-                <div class="stats-row" style="margin-top: -20px; flex-wrap: wrap;">
-                    <div class="stat-cell" style="flex: 1 1 40%;">
-                        <div class="stat-val" id="p-stat-xp">220</div>
-                        <div class="stat-lbl">Total XP</div>
-                    </div>
-                    <div class="stat-cell" style="flex: 1 1 40%;">
-                        <div class="stat-val" id="p-stat-streak">0</div>
-                        <div class="stat-lbl">Best Streak</div>
-                    </div>
-                    <div class="stat-cell" style="flex: 1 1 40%;">
-                        <div class="stat-val" id="p-stat-quests">0</div>
-                        <div class="stat-lbl">Quests Done</div>
-                    </div>
-                    <div class="stat-cell" style="flex: 1 1 40%;">
-                        <div class="stat-val" id="p-stat-evs">0</div>
-                        <div class="stat-lbl">Events Logged</div>
-                    </div>
-                </div>
-                <div class="section" style="margin-top: 20px;">
-                    <div class="sec-title sora"><b>Career Stage</b></div>
-                    <div class="tl-cont">
-                        <div class="tl-line"></div>
-                        <div id="prof-timeline"></div>
-                    </div>
-                </div>
-                <div class="section">
-                    <div class="sec-title sora"><b>My Courses</b></div>
-                    <div id="prof-courses" style="font-size:13px; line-height:1.6; margin-bottom: 24px; padding: 12px; background: var(--surface); border-radius: var(--border-rad-md); border: 1px solid var(--border);"></div>
-                    <button class="btn" style="background:var(--red-light); color:var(--red);" onclick="location.reload()">Change career / Reset app</button>
-                </div>
-            </div>
-
-        </div> <div class="bottom-nav" id="bottom-nav">
-            <div class="nav-btn active" onclick="switchTab('home')">
-                <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>Home
-            </div>
-            <div class="nav-btn" onclick="switchTab('calendar')">
-                <svg viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10z"/></svg>Calendar
-            </div>
-            <div class="nav-btn" onclick="switchTab('plan')">
-                <svg viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>Study plan
-            </div>
-            <div class="nav-btn" onclick="switchTab('checkin')">
-                <svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 1.5 8.5 1.5zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/></svg>Check-in
-            </div>
-            <div class="nav-btn" onclick="switchTab('profile')">
-                <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>Profile
+        <!-- Top Status Bar Mock -->
+        <div class="h-10 w-full bg-slate-900 flex justify-between items-center px-8 pt-2 text-xs font-semibold text-slate-400 z-50 shrink-0">
+            <div>9:41</div>
+            <div class="w-24 h-4 bg-black rounded-full absolute left-1/2 transform -translate-x-1/2 top-2"></div>
+            <div class="flex items-center space-x-1">
+                <span>📶</span>
+                <span>🔋</span>
             </div>
         </div>
 
-        <div id="xp-screen">
-            <div class="xp-star">⭐</div>
-            <div class="xp-val" id="xp-val-txt">+10 XP</div>
-            <div class="xp-msg" id="xp-msg-txt">Awesome!</div>
-            <div class="xp-sub" id="xp-sub-txt">You're making progress.</div>
-            <button class="btn" style="background: white; color: var(--med-purple);" onclick="closeXP()">Keep going &rarr;</button>
-        </div>
-
-    </div>
-
-    <div class="info-panel">
-        <div class="info-card">
-            <h3>What's new in v2</h3>
-            <ol>
-                <li><strong>Career path mapping:</strong> Every subject is now reframed as a step toward 5 specific dream careers.</li>
-                <li><strong>AI Catch-up centre:</strong> Upload missed notes to get an AI-generated summary and quiz (powered by Anthropic Claude 3.5 Sonnet).</li>
-                <li><strong>Auto-study plan:</strong> Adding tests to the calendar automatically generates spaced repetition study tasks.</li>
-                <li><strong>Well-being check-ins:</strong> Daily mood tracking tied to attendance streak mechanics.</li>
-            </ol>
-        </div>
-        <div class="info-card">
-            <h3>5 Career Paths</h3>
-            <div class="badge-list">
-                <div class="badge-item"><div class="badge-dot" style="background:var(--amber)"></div>Business (Econ, Math, Lang, Hist)</div>
-                <div class="badge-item"><div class="badge-dot" style="background:var(--teal)"></div>Medical school (Bio, Chem, Phys, Ethics)</div>
-                <div class="badge-item"><div class="badge-dot" style="background:var(--true-pink)"></div>Law (Hist, Lang, Math, Phil)</div>
-                <div class="badge-item"><div class="badge-dot" style="background:var(--dark-purple)"></div>Teaching (Psych, Lang, Math, Sci)</div>
-                <div class="badge-item"><div class="badge-dot" style="background:var(--blue)"></div>Civil engineering (Phys, Math, Geog, Chem)</div>
+        <!-- App Header (Persistent Stats) -->
+        <div class="bg-slate-900 border-b border-slate-800 px-5 py-3 shrink-0 z-40">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                    <div class="w-9 h-9 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20">
+                        S
+                    </div>
+                    <div>
+                        <h1 class="text-sm font-bold tracking-tight text-white">StudyPath</h1>
+                        <p class="text-[10px] text-slate-400 font-medium" id="current-career-badge">Select a Dream Path</p>
+                    </div>
+                </div>
+                <!-- Gamified Stats Header -->
+                <div class="flex items-center space-x-3">
+                    <div class="bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-700/50 flex items-center space-x-1 shadow-sm">
+                        <span class="text-xs">⚡</span>
+                        <span class="text-xs font-bold text-amber-400" id="xp-display">120 XP</span>
+                    </div>
+                    <div class="bg-slate-800/80 px-2.5 py-1 rounded-full border border-slate-700/50 flex items-center space-x-1 shadow-sm">
+                        <span class="text-xs">🔥</span>
+                        <span class="text-xs font-bold text-orange-400" id="streak-display">4 Days</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Level Progress Bar -->
+            <div class="mt-2.5 flex items-center space-x-2">
+                <span class="text-[9px] font-bold text-slate-400 shrink-0" id="level-label">LVL 2</span>
+                <div class="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                    <div id="level-bar" class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-500" style="width: 20%"></div>
+                </div>
+                <span class="text-[9px] font-medium text-slate-500 shrink-0" id="level-next">to LVL 3</span>
             </div>
         </div>
-        <div class="info-card gradient">
-            <h3>For Teachers & Counselors</h3>
-            <p>Futura flips the script on chronic absenteeism by giving students a clear "why" for attending class. Monitor progress from the teacher dashboard.</p>
-            <button class="btn-info" onclick="alert('The Teacher Dashboard provides real-time analytics on attendance streaks, mood trends, and completed catch-up modules to identify students who need early intervention.')">View dashboard concept</button>
+
+        <!-- Main Dynamic Screen Content Area -->
+        <div id="screen-content" class="flex-1 overflow-y-auto p-5 no-scrollbar pb-24 bg-gradient-to-b from-slate-900 to-slate-950">
+            <!-- Dynamic content injected here by JavaScript -->
         </div>
-        <div class="info-card teal">
-            <h3>Evidence-based Approach</h3>
-            <p>Research shows that chronic absenteeism is strongly correlated with a lack of connection between schoolwork and future goals. Futura addresses this through career-mapped engagement, AI-powered catch-up to prevent "falling behind" spirals, and calendar-integrated study planning.</p>
+
+        <!-- Toast / XP float layer -->
+        <div id="toast-layer" class="absolute inset-0 pointer-events-none z-[60]"></div>
+
+        <!-- Bottom Navigation Bar -->
+        <div class="absolute bottom-0 left-0 right-0 h-20 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 flex justify-around items-center px-4 pb-4 z-50">
+            <button onclick="switchTab('career')" id="nav-career" class="flex flex-col items-center space-y-1 transition-all">
+                <span class="text-xl">🚀</span>
+                <span class="text-[10px]">My Path</span>
+            </button>
+            <button onclick="switchTab('calendar')" id="nav-calendar" class="flex flex-col items-center space-y-1 transition-all">
+                <span class="text-xl">📅</span>
+                <span class="text-[10px]">Calendar</span>
+            </button>
+            <button onclick="switchTab('study')" id="nav-study" class="flex flex-col items-center space-y-1 transition-all">
+                <span class="text-xl">🎯</span>
+                <span class="text-[10px]">Daily Goals</span>
+            </button>
+            <button onclick="switchTab('catchup')" id="nav-catchup" class="flex flex-col items-center space-y-1 transition-all relative">
+                <span class="text-xl">🩹</span>
+                <span class="text-[10px]">AI Catch-Up</span>
+                <span id="catchup-ping" class="absolute -top-1 -right-1 w-2 h-2 bg-purple-500 rounded-full animate-ping"></span>
+            </button>
         </div>
     </div>
-</div>
 
-<script>
-// --- DATA & STATE ---
-var S = {
-    career: null, xp: 220, streak: 0, checkins: 0, quests: 0, bestStreak: 0,
-    doneQuests: {}, doneCatchups: {}, events: [], courses: [
-        {name: "Mathematics", days: {Mon:true, Tue:true, Wed:false, Thu:true, Fri:false}},
-        {name: "History", days: {Mon:false, Tue:true, Wed:true, Thu:false, Fri:true}},
-        {name: "Science", days: {Mon:true, Tue:false, Wed:true, Thu:true, Fri:false}}
-    ], planItems: [], planFilter: "all", planWeek: 1,
-    calMonth: new Date().getMonth(), calYear: new Date().getFullYear(), calSelDay: null,
-    evType: "test", evType2: "test", aiStates: {}
-};
-
-var CAREERS = {
-    "business": {
-        label: "Business", abbr: "BU", accent: "var(--amber)", light: "var(--amber-light)", text: "#8F5900", dark: "#A66800",
-        ranks: ["Intern", "Junior analyst", "Analyst", "Senior analyst", "Manager", "Director", "VP", "CEO"],
-        stages: ["Business student", "Intern", "Junior analyst", "Analyst", "Senior analyst", "Manager", "Director", "VP", "CEO"],
-        subjects: [
-            {name: "Economics", xp: 80, conn: "how markets work — pricing and strategy"},
-            {name: "Mathematics", xp: 60, conn: "statistics for business decisions"},
-            {name: "Language", xp: 70, conn: "persuasive writing for pitches"},
-            {name: "History", xp: 50, conn: "how crises shaped modern economics"}
-        ],
-        catchups: [
-            {id: "b1", name: "Market Equilibrium", dur: "15 min"},
-            {id: "b2", name: "Statistical Variance", dur: "20 min"},
-            {id: "b3", name: "The 2008 Crash", dur: "25 min"}
-        ],
-        challenges: {
-            "Economics": "If a competitor drops their price by 20%, what is your immediate strategic response to maintain market share without losing margin?",
-            "Mathematics": "How do you calculate the standard deviation of our quarterly sales to predict next month's risk?",
-            "Language": "Draft a compelling 2-sentence opening for an investment pitch.",
-            "History": "How did the dot-com bubble burst alter venture capital funding strategies?"
-        }
-    },
-    "medical": {
-        label: "Medical school", abbr: "ME", accent: "var(--teal)", light: "var(--teal-light)", text: "#007A65", dark: "#005C4C",
-        ranks: ["Pre-med", "Med student", "Intern", "Resident", "Fellow", "Specialist", "Attending physician"],
-        stages: ["Secondary student", "Pre-med", "Med years 1 and 2", "Intern", "Resident", "Fellow", "Specialist", "Attending physician"],
-        subjects: [
-            {name: "Biology", xp: 90, conn: "cellular respiration and diagnosing fatigue"},
-            {name: "Chemistry", xp: 80, conn: "pharmacology and how drugs work"},
-            {name: "Physics", xp: 70, conn: "medical imaging and MRI science"},
-            {name: "Ethics", xp: 60, conn: "informed consent and patient rights"}
-        ],
-        catchups: [
-            {id: "m1", name: "Cellular ATP Production", dur: "20 min"},
-            {id: "m2", name: "Enzyme Kinetics", dur: "15 min"},
-            {id: "m3", name: "Bioethics Case Study", dur: "25 min"}
-        ],
-        challenges: {
-            "Biology": "A patient presents with chronic fatigue. How does a defect in the mitochondria explain this?",
-            "Chemistry": "Why does a competitive inhibitor change the apparent affinity of an enzyme but not its maximum rate?",
-            "Physics": "Explain how magnetic resonance utilizes proton spin to create an image of soft tissue.",
-            "Ethics": "A patient refuses life-saving treatment based on personal beliefs. How do you balance beneficence with autonomy?"
-        }
-    },
-    "law": {
-        label: "Law", abbr: "LA", accent: "var(--true-pink)", light: "var(--true-pink-light)", text: "#B31050", dark: "#8A0B3D",
-        ranks: ["Law student", "Trainee", "Junior associate", "Associate", "Senior associate", "Partner"],
-        stages: ["Secondary student", "Pre-law", "Law years 1 through 3", "Trainee", "Junior associate", "Associate", "Partner/QC"],
-        subjects: [
-            {name: "History", xp: 75, conn: "past cases shape legal rulings"},
-            {name: "Language", xp: 85, conn: "rhetoric and argumentation for court"},
-            {name: "Mathematics", xp: 55, conn: "statistical evidence in trials"},
-            {name: "Philosophy", xp: 70, conn: "ethics and justice as the foundation of law"}
-        ],
-        catchups: [
-            {id: "l1", name: "Precedent & Common Law", dur: "20 min"},
-            {id: "l2", name: "Logical Fallacies", dur: "15 min"},
-            {id: "l3", name: "Probability in Evidence", dur: "20 min"}
-        ],
-        challenges: {
-            "History": "How does the ruling in Donoghue v Stevenson apply to modern product liability?",
-            "Language": "Identify the flaw in your opponent's ad hominem attack during a closing statement.",
-            "Mathematics": "If DNA matches 1 in 10,000, what is the prosecutor's fallacy in presenting this to a jury?",
-            "Philosophy": "Is an unjust law still a law? Defend your position using natural law theory."
-        }
-    },
-    "teaching": {
-        label: "Teaching", abbr: "TE", accent: "var(--med-purple)", light: "#EAE9FE", text: "var(--dark-purple)", dark: "#2D2A43",
-        ranks: ["Student teacher", "Trainee", "NQT", "Teacher", "Senior teacher", "Head of dept", "Headteacher"],
-        stages: ["Secondary student", "Education student", "Student teacher", "Trainee", "NQT", "Teacher", "Senior teacher", "Head of dept", "Headteacher"],
-        subjects: [
-            {name: "Psychology", xp: 80, conn: "how students learn and cognitive development"},
-            {name: "Language", xp: 70, conn: "clear communication essential for every lesson"},
-            {name: "Mathematics", xp: 60, conn: "numeracy teaching and assessment data"},
-            {name: "Science", xp: 75, conn: "inquiry-based learning through curiosity"}
-        ],
-        catchups: [
-            {id: "t1", name: "Piaget's Stages", dur: "15 min"},
-            {id: "t2", name: "Formative Assessment", dur: "20 min"},
-            {id: "t3", name: "Scaffolding Techniques", dur: "15 min"}
-        ],
-        challenges: {
-            "Psychology": "A 14-year-old student is struggling with abstract concepts. How do you apply Vygotsky's ZPD?",
-            "Language": "Rewrite a complex textbook definition into language suitable for a 12-year-old.",
-            "Mathematics": "Analyze this bell curve of recent test results. What does it tell you about the difficulty of the test?",
-            "Science": "Design a 5-minute inquiry-based hook for a lesson on gravity."
-        }
-    },
-    "civil": {
-        label: "Civil engineering", abbr: "CE", accent: "var(--blue)", light: "var(--blue-light)", text: "#004B99", dark: "#003366",
-        ranks: ["Trainee", "Graduate engineer", "Engineer", "Senior engineer", "Principal engineer", "Lead engineer", "Director"],
-        stages: ["Secondary student", "Engineering student", "Trainee", "Graduate engineer", "Engineer", "Senior engineer", "Principal engineer", "Lead engineer", "Director"],
-        subjects: [
-            {name: "Physics", xp: 90, conn: "statics and dynamics — forces holding bridges up"},
-            {name: "Mathematics", xp: 85, conn: "calculus for structural load calculations"},
-            {name: "Geography", xp: 65, conn: "soil and terrain for foundation design"},
-            {name: "Chemistry", xp: 70, conn: "materials science — concrete, steel, composites"}
-        ],
-        catchups: [
-            {id: "c1", name: "Vector Mechanics", dur: "25 min"},
-            {id: "c2", name: "Integration Applications", dur: "20 min"},
-            {id: "c3", name: "Soil Mechanics", dur: "20 min"}
-        ],
-        challenges: {
-            "Physics": "Calculate the tension in a support cable given a downward load of 50kN at a 45-degree angle.",
-            "Mathematics": "Use integration to find the center of mass of an irregularly shaped structural beam.",
-            "Geography": "Why is liquefaction a risk in sandy soil environments during seismic activity?",
-            "Chemistry": "Explain how the hydration of Portland cement contributes to the compressive strength of concrete."
-        }
-    }
-};
-
-var EVENT_COLORS = { "test": "var(--red)", "quiz": "var(--true-pink)", "homework": "var(--amber)", "class": "var(--blue)", "other": "var(--teal)" };
-
-// --- UTILS ---
-function el(id) { return document.getElementById(id); }
-function padDate(d) { return d < 10 ? '0'+d : d; }
-
-setInterval(function(){
-    var d = new Date();
-    var h = d.getHours(), m = d.getMinutes();
-    var ampm = h >= 12 ? 'PM' : 'AM';
-    h = h % 12; h = h ? h : 12; 
-    el('live-time').innerText = padDate(h) + ':' + padDate(m);
-}, 10000);
-
-// --- ONBOARDING LOGIC ---
-function renderCareers() {
-    var grid = el('career-grid');
-    var html = '';
-    var keys = Object.keys(CAREERS);
-    for(var i=0; i<keys.length; i++) {
-        var k = keys[i];
-        var c = CAREERS[k];
-        var isCivil = k === 'civil';
-        var icon = k==='business'?'📈':k==='medical'?'❤️':k==='law'?'⚖️':k==='teaching'?'📚':'📐';
-        html += '<div class="career-card ' + (isCivil?'full':'') + '" id="cc-'+k+'" onclick="selCareer(\''+k+'\')">';
-        html += '<div class="c-icon">'+icon+'</div>';
-        html += '<div class="c-title">'+c.label+'</div>';
-        var sub = k==='business'?'Administration':k==='medical'?'Medicine':k==='law'?'Justice & rights':k==='teaching'?'Education':'Design & build';
-        html += '<div class="c-sub">'+sub+'</div></div>';
-    }
-    grid.innerHTML = html;
-}
-renderCareers();
-
-function selCareer(k) {
-    S.career = k;
-    var cards = document.querySelectorAll('.career-card');
-    for(var i=0; i<cards.length; i++) cards[i].classList.remove('selected');
-    el('cc-'+k).classList.add('selected');
-    el('btn-ob-1').disabled = false;
-}
-
-function nextOb(step) {
-    var steps = document.querySelectorAll('.ob-step');
-    for(var i=0; i<steps.length; i++) steps[i].classList.remove('active');
-    el('ob-step-'+step).classList.add('active');
-    if(step === 2) renderObCourses();
-    if(step === 3) {
-        var d = new Date();
-        el('ob-ev-date').value = d.getFullYear() + '-' + padDate(d.getMonth()+1) + '-' + padDate(d.getDate());
-        renderObMiniCal();
-    }
-}
-
-function renderObCourses() {
-    var list = el('course-list');
-    var html = '';
-    for(var i=0; i<S.courses.length; i++) {
-        var c = S.courses[i];
-        html += '<div class="course-row">';
-        html += '<input type="text" class="input-text" value="'+c.name+'" onchange="S.courses['+i+'].name=this.value">';
-        html += '<div class="day-btns">';
-        var days = ['Mon','Tue','Wed','Thu','Fri'];
-        for(var j=0; j<days.length; j++) {
-            var d = days[j];
-            var act = c.days[d] ? 'active' : '';
-            html += '<div class="day-btn '+act+'" onclick="toggleCourseDay('+i+',\''+d+'\', this)">'+d+'</div>';
-        }
-        html += '</div></div>';
-    }
-    list.innerHTML = html;
-}
-
-function toggleCourseDay(idx, day, btn) {
-    S.courses[idx].days[day] = !S.courses[idx].days[day];
-    if(S.courses[idx].days[day]) btn.classList.add('active');
-    else btn.classList.remove('active');
-}
-
-function addCourseRow() {
-    S.courses.push({name: "", days: {Mon:false, Tue:false, Wed:false, Thu:false, Fri:false}});
-    renderObCourses();
-}
-
-function saveCoursesAndNext() {
-    S.courses = S.courses.filter(function(c) { return c.name.trim() !== ""; });
-    nextOb(3);
-}
-
-function renderObMiniCal() {
-    var cal = el('ob-mini-cal');
-    var d = new Date();
-    var html = '';
-    var daysInMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
-    for(var i=1; i<=daysInMonth; i++) {
-        var evDots = '';
-        for(var j=0; j<S.events.length; j++) {
-            var evD = new Date(S.events[j].date + "T12:00:00");
-            if(evD.getDate() === i && evD.getMonth() === d.getMonth()) {
-                evDots += '<div style="position:absolute; bottom:2px; width:4px; height:4px; border-radius:50%; background:'+EVENT_COLORS[S.events[j].type]+'"></div>';
-                break;
-            }
-        }
-        var isToday = i === d.getDate() ? 'border:1px solid var(--med-purple); color:var(--med-purple); font-weight:bold;' : '';
-        html += '<div class="mini-cal-day" style="'+isToday+'">' + i + evDots + '</div>';
-    }
-    cal.innerHTML = html;
-}
-
-function setObEvType(t, btn) {
-    S.evType = t;
-    var btns = el('ob-type-btns').children;
-    for(var i=0; i<btns.length; i++) btns[i].classList.remove('active');
-    btn.classList.add('active');
-}
-
-function addObEvent() {
-    var title = el('ob-ev-title').value.trim();
-    var date = el('ob-ev-date').value;
-    if(!title || !date) return;
-    S.events.push({title: title, date: date, type: S.evType, course: ""});
-    el('ob-ev-title').value = '';
-    S.xp += 5;
-    renderObMiniCal();
-    el('ob-ev-stats').innerText = S.events.length + ' events added • ' + (S.events.length*5) + ' XP earned';
-}
-
-function finishOnboarding() {
-    el('onboarding').classList.remove('active');
-    el('bottom-nav').style.display = 'flex';
-    generatePlan();
-    updateUIAll();
-    switchTab('home');
-}
-
-// --- GLOBAL UI UPDATES ---
-function getRank() {
-    if(!S.career) return "";
-    var ranks = CAREERS[S.career].ranks;
-    var idx = Math.min(Math.floor(S.xp / 1000), ranks.length - 1);
-    return ranks[idx];
-}
-
-function updateUIAll() {
-    if(!S.career) return;
-    var c = CAREERS[S.career];
-    var pct = (S.xp % 1000) / 10;
-    var rank = getRank();
-    
-    // Home
-    el('home-hdr').style.background = c.dark;
-    el('home-greet').innerText = "Future " + c.label;
-    el('home-rank').innerText = rank.toUpperCase();
-    el('home-xp-fill').style.width = pct + '%';
-    el('home-xp-tot').innerText = S.xp + ' XP';
-    el('home-streak-lbl').innerText = '🔥 ' + S.streak + ' Day Streak';
-    
-    el('stat-streak').innerText = S.streak;
-    el('stat-quests').innerText = S.quests;
-    el('stat-xp').innerText = S.xp;
-    
-    // Profile
-    el('prof-hdr').style.background = c.dark;
-    el('prof-av').style.color = c.accent;
-    el('prof-career').innerText = c.label + ' Path';
-    el('prof-rank-lbl').innerText = rank;
-    
-    el('p-stat-xp').innerText = S.xp;
-    el('p-stat-streak').innerText = Math.max(S.streak, S.bestStreak);
-    el('p-stat-quests').innerText = S.quests;
-    el('p-stat-evs').innerText = S.events.length;
-}
-
-function addXP(amt, msg, sub) {
-    S.xp += amt;
-    updateUIAll();
-    el('xp-val-txt').innerText = '+' + amt + ' XP';
-    el('xp-msg-txt').innerText = msg || 'Awesome!';
-    el('xp-sub-txt').innerText = sub || "You're making progress.";
-    el('xp-screen').classList.add('active');
-    setTimeout(closeXP, 2200);
-}
-
-function closeXP() {
-    el('xp-screen').classList.remove('active');
-}
-
-// --- NAVIGATION ---
-function switchTab(tabId) {
-    var screens = document.querySelectorAll('.app-content > .screen');
-    for(var i=0; i<screens.length; i++) {
-        if(screens[i].id !== 'onboarding' && screens[i].id !== 'xp-screen') screens[i].classList.remove('active');
-    }
-    el('tab-'+tabId).classList.add('active');
-    
-    var btns = document.querySelectorAll('.nav-btn');
-    for(var j=0; j<btns.length; j++) btns[j].classList.remove('active');
-    var activeBtn = Array.prototype.slice.call(btns).find(function(b){ return b.innerText.toLowerCase().trim() === tabId.replace('-',' ').toLowerCase() || (tabId==='catchup' && false); });
-    if(activeBtn) activeBtn.classList.add('active');
-
-    if(tabId === 'home') renderHome();
-    if(tabId === 'calendar') { renderCalendar(); renderCalAllEvents(); populateCalCourses(); }
-    if(tabId === 'plan') renderPlan();
-    if(tabId === 'catchup') renderCatchups();
-    if(tabId === 'profile') renderProfile();
-}
-
-// --- HOME RENDERING ---
-function renderHome() {
-    var c = CAREERS[S.career];
-    var qHtml = '';
-    for(var i=0; i<c.subjects.length; i++) {
-        var sub = c.subjects[i];
-        var isDone = S.doneQuests[sub.name];
-        var cardClass = 'quest-card ' + (isDone ? 'done' : '');
-        
-        qHtml += '<div class="'+cardClass+'" onclick="toggleQuest(this)">';
-        qHtml += '<div class="q-xp" style="background:'+c.light+'; color:'+c.dark+'">'+sub.xp+' XP</div>';
-        qHtml += '<div class="q-sub">'+sub.name+(isDone?' ✓':'')+'</div>';
-        qHtml += '<div class="q-conn">'+sub.conn+'</div>';
-        
-        if(!isDone) {
-            qHtml += '<div class="q-expand" onclick="event.stopPropagation()">';
-            qHtml += '<div class="chal-box" style="background:'+c.light+'; color:'+c.dark+'"><b>Challenge:</b> '+c.challenges[sub.name]+'</div>';
-            qHtml += '<div class="chal-box" style="background:'+c.light+'; color:'+c.dark+'; opacity:0.4;"><b>Locked:</b> Complete first challenge to unlock.</div>';
-            qHtml += '<div class="missed-block" onclick="switchTab(\'catchup\')"><span>Missed a class? Upload notes</span><span>&rarr;</span></div>';
-            qHtml += '<button class="btn" style="background:'+c.dark+'; color:white;" onclick="completeQuest(\''+sub.name+'\', '+sub.xp+')">Complete Quest</button>';
-            qHtml += '</div>';
-        }
-        qHtml += '</div>';
-    }
-    el('home-quests').innerHTML = qHtml;
-    
-    // Events
-    var today = new Date().toISOString().split('T')[0];
-    var upcoming = S.events.filter(function(e) { return e.date >= today; }).sort(function(a,b){ return a.date > b.date ? 1 : -1; }).slice(0,3);
-    var eHtml = '';
-    if(upcoming.length === 0) eHtml = '<div style="font-size:13px; color:var(--text-muted)">No upcoming events.</div>';
-    for(var j=0; j<upcoming.length; j++) {
-        var ev = upcoming[j];
-        var col = EVENT_COLORS[ev.type];
-        var dateStr = new Date(ev.date+"T12:00:00").toLocaleDateString('en-US', {month:'short', day:'numeric'});
-        eHtml += '<div class="event-item">';
-        eHtml += '<div class="e-dot" style="background:'+col+'"></div>';
-        eHtml += '<div class="e-info"><div class="e-title">'+ev.title+'</div><div class="e-date">'+dateStr+'</div></div>';
-        eHtml += '<div class="e-badge" style="background:'+col+'33; color:'+col+'">'+ev.type+'</div>';
-        eHtml += '</div>';
-    }
-    el('home-events').innerHTML = eHtml;
-}
-
-function toggleQuest(el) {
-    if(!el.classList.contains('done')) el.classList.toggle('expanded');
-}
-
-function completeQuest(name, xp) {
-    S.doneQuests[name] = true;
-    S.quests++;
-    addXP(xp, "Quest Completed!", "You mastered " + name);
-    renderHome();
-}
-
-// --- CALENDAR LOGIC ---
-var MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-function changeMonth(dir) {
-    S.calMonth += dir;
-    if(S.calMonth < 0) { S.calMonth = 11; S.calYear--; }
-    if(S.calMonth > 11) { S.calMonth = 0; S.calYear++; }
-    renderCalendar();
-}
-
-function renderCalendar() {
-    el('cal-month-lbl').innerText = MONTHS[S.calMonth] + ' ' + S.calYear;
-    var grid = el('cal-days');
-    var firstDay = new Date(S.calYear, S.calMonth, 1).getDay();
-    var daysInMonth = new Date(S.calYear, S.calMonth + 1, 0).getDate();
-    var today = new Date();
-    
-    var html = '';
-    for(var i=0; i<firstDay; i++) { html += '<div></div>'; }
-    for(var d=1; d<=daysInMonth; d++) {
-        var dateStr = S.calYear + '-' + padDate(S.calMonth+1) + '-' + padDate(d);
-        var isToday = (d === today.getDate() && S.calMonth === today.getMonth() && S.calYear === today.getFullYear()) ? 'today' : '';
-        var isSel = (S.calSelDay === dateStr) ? 'sel' : '';
-        
-        var dots = '';
-        var evs = S.events.filter(function(e){ return e.date === dateStr; }).slice(0,2);
-        for(var j=0; j<evs.length; j++) dots += '<div class="cal-dot" style="background:'+EVENT_COLORS[evs[j].type]+'"></div>';
-        
-        html += '<div class="cal-cell '+isToday+' '+isSel+'" onclick="selCalDay(\''+dateStr+'\')">'+d+'<div class="cal-dots">'+dots+'</div></div>';
-    }
-    grid.innerHTML = html;
-    
-    if(!S.calSelDay) selCalDay(S.calYear + '-' + padDate(S.calMonth+1) + '-' + padDate(today.getDate()));
-}
-
-function selCalDay(dateStr) {
-    S.calSelDay = dateStr;
-    renderCalendar(); // re-render to show selection
-    
-    var dObj = new Date(dateStr+"T12:00:00");
-    el('cal-sel-date-lbl').innerText = 'Events for ' + dObj.toLocaleDateString('en-US', {month:'short', day:'numeric'});
-    
-    var evs = S.events.filter(function(e){ return e.date === dateStr; });
-    var html = '';
-    if(evs.length===0) html = '<div style="font-size:12px; color:var(--text-muted)">No events.</div>';
-    for(var i=0; i<evs.length; i++) {
-        var ev = evs[i];
-        html += '<div class="event-item" style="padding:8px;">';
-        html += '<div class="e-dot" style="background:'+EVENT_COLORS[ev.type]+'"></div>';
-        html += '<div class="e-info"><div class="e-title" style="font-size:12px;">'+ev.title+(ev.course?' <span style="font-weight:normal;color:var(--text-muted)">('+ev.course+')</span>':'')+'</div></div>';
-        html += '<div style="font-size:10px; cursor:pointer; color:var(--red);" onclick="delEvent(\''+ev.title+'\',\''+ev.date+'\')">Delete</div>';
-        html += '</div>';
-    }
-    el('cal-day-events').innerHTML = html;
-}
-
-function populateCalCourses() {
-    var sel = el('cal-ev-course');
-    var html = '<option value="">No specific course</option>';
-    for(var i=0; i<S.courses.length; i++) {
-        html += '<option value="'+S.courses[i].name+'">'+S.courses[i].name+'</option>';
-    }
-    sel.innerHTML = html;
-}
-
-function setCalEvType(t, btn) {
-    S.evType2 = t;
-    var btns = el('cal-type-btns').children;
-    for(var i=0; i<btns.length; i++) btns[i].classList.remove('active');
-    btn.classList.add('active');
-}
-
-function addCalEvent() {
-    var title = el('cal-ev-title').value.trim();
-    if(!title || !S.calSelDay) return;
-    var crs = el('cal-ev-course').value;
-    S.events.push({title: title, date: S.calSelDay, type: S.evType2, course: crs});
-    el('cal-ev-title').value = '';
-    addXP(5, "Event Added!", "Stay organized.");
-    renderCalendar();
-    selCalDay(S.calSelDay);
-    renderCalAllEvents();
-    generatePlan();
-}
-
-function delEvent(title, date) {
-    S.events = S.events.filter(function(e) { return !(e.title === title && e.date === date); });
-    renderCalendar();
-    selCalDay(S.calSelDay);
-    renderCalAllEvents();
-    generatePlan();
-}
-
-function renderCalAllEvents() {
-    var mStr = S.calYear + '-' + padDate(S.calMonth+1);
-    var evs = S.events.filter(function(e){ return e.date.startsWith(mStr); }).sort(function(a,b){ return a.date>b.date?1:-1; });
-    var html = '';
-    if(evs.length===0) html = '<div style="font-size:12px; color:var(--text-muted)">No events this month.</div>';
-    for(var j=0; j<evs.length; j++) {
-        var ev = evs[j];
-        var col = EVENT_COLORS[ev.type];
-        var dateStr = new Date(ev.date+"T12:00:00").toLocaleDateString('en-US', {month:'short', day:'numeric'});
-        html += '<div class="event-item">';
-        html += '<div class="e-dot" style="background:'+col+'"></div>';
-        html += '<div class="e-info"><div class="e-title">'+ev.title+'</div><div class="e-date">'+dateStr+'</div></div>';
-        html += '<div class="e-badge" style="background:'+col+'33; color:'+col+'">'+ev.type+'</div>';
-        html += '</div>';
-    }
-    el('cal-all-events').innerHTML = html;
-}
-
-// --- STUDY PLAN LOGIC ---
-function getISOWeek(d) {
-    var date = new Date(d.getTime());
-    date.setHours(0, 0, 0, 0);
-    date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
-    var week1 = new Date(date.getFullYear(), 0, 4);
-    return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
-}
-
-function generatePlan() {
-    var oldDones = {};
-    for(var i=0; i<S.planItems.length; i++) {
-        if(S.planItems[i].done) oldDones[S.planItems[i].id] = true;
-    }
-    S.planItems = [];
-    var today = new Date();
-    today.setHours(0,0,0,0);
-    
-    for(var j=0; j<S.events.length; j++) {
-        var ev = S.events[j];
-        var d = new Date(ev.date+"T12:00:00");
-        if(ev.type === 'homework') {
-            var wk = getISOWeek(d);
-            S.planItems.push({id: 'hw_'+ev.title+'_'+ev.date, title: "Complete: "+ev.title, date: ev.date, week: wk, type: 'homework'});
-        }
-        else if(ev.type === 'quiz') {
-            var d1 = new Date(d); d1.setDate(d1.getDate()-1);
-            var wk1 = getISOWeek(d1);
-            S.planItems.push({id: 'qz_'+ev.title+'_'+ev.date, title: "Study for quiz: "+ev.title, date: d1.toISOString().split('T')[0], week: wk1, type: 'study'});
-        }
-        else if(ev.type === 'test') {
-            var d3 = new Date(d); d3.setDate(d3.getDate()-3);
-            var d1 = new Date(d); d1.setDate(d1.getDate()-1);
-            S.planItems.push({id: 't1_'+ev.title+'_'+ev.date, title: "Start studying: "+ev.title, date: d3.toISOString().split('T')[0], week: getISOWeek(d3), type: 'study'});
-            S.planItems.push({id: 't2_'+ev.title+'_'+ev.date, title: "Review notes: "+ev.title, date: d1.toISOString().split('T')[0], week: getISOWeek(d1), type: 'review'});
-            S.planItems.push({id: 't3_'+ev.title+'_'+ev.date, title: "Final revision: "+ev.title, date: ev.date, week: getISOWeek(d), type: 'review'});
-        }
-    }
-    
-    for(var k=0; k<S.planItems.length; k++) {
-        var pi = S.planItems[k];
-        var pidate = new Date(pi.date+"T12:00:00");
-        var diff = Math.ceil((pidate - today) / 86400000);
-        pi.pri = diff <= 1 ? 'high' : (diff <= 3 ? 'medium' : 'low');
-        pi.done = !!oldDones[pi.id];
-    }
-    
-    S.planItems.sort(function(a,b) { return a.date > b.date ? 1 : -1; });
-    renderPlan();
-}
-
-function setPlanFilter(f, btn) {
-    S.planFilter = f;
-    var btns = btn.parentElement.children;
-    for(var i=0; i<btns.length; i++) btns[i].classList.remove('active');
-    btn.classList.add('active');
-    renderPlan();
-}
-
-function setPlanWeek(w) {
-    S.planWeek = w;
-    renderPlan();
-}
-
-function renderPlan() {
-    var weeks = {};
-    var tot = S.planItems.length;
-    var doneCount = 0;
-    for(var i=0; i<tot; i++) {
-        weeks[S.planItems[i].week] = true;
-        if(S.planItems[i].done) doneCount++;
-    }
-    var pct = tot > 0 ? Math.round((doneCount/tot)*100) : 0;
-    el('plan-prog-pct').innerText = pct + '%';
-    el('plan-prog-fill').style.width = pct + '%';
-    
-    var wks = Object.keys(weeks).map(Number).sort(function(a,b){return a-b;});
-    if(wks.length > 0 && !weeks[S.planWeek]) S.planWeek = wks[0];
-    
-    var wHtml = '';
-    for(var j=0; j<wks.length; j++) {
-        var w = wks[j];
-        var act = w === S.planWeek ? 'active' : '';
-        wHtml += '<div class="week-tab '+act+'" onclick="setPlanWeek('+w+')">Week '+w+'</div>';
-    }
-    el('plan-weeks').innerHTML = wHtml;
-    
-    var html = '';
-    var items = S.planItems.filter(function(p) { 
-        return p.week === S.planWeek && (S.planFilter === 'all' || p.type === S.planFilter); 
-    });
-    
-    if(items.length===0) html = '<div style="padding: 20px; font-size:13px; color:var(--text-muted); text-align:center;">No tasks for this filter/week.</div>';
-    
-    for(var k=0; k<items.length; k++) {
-        var pi = items[k];
-        var pCol = pi.pri==='high'?'var(--red)':(pi.pri==='medium'?'var(--amber)':'var(--teal)');
-        var dStr = new Date(pi.date+"T12:00:00").toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric'});
-        var doneCls = pi.done ? 'done' : '';
-        
-        html += '<div class="plan-item '+doneCls+'">';
-        html += '<div class="cb" onclick="togglePlanItem(\''+pi.id+'\')"></div>';
-        html += '<div class="p-info">';
-        html += '<div class="p-title">'+pi.title+'</div>';
-        html += '<div class="p-meta"><span>'+dStr+'</span><span class="p-pri" style="background:'+pCol+'33; color:'+pCol+'">'+pi.pri+'</span></div>';
-        html += '</div></div>';
-    }
-    el('plan-list').innerHTML = html;
-}
-
-function togglePlanItem(id) {
-    for(var i=0; i<S.planItems.length; i++) {
-        if(S.planItems[i].id === id) {
-            if(!S.planItems[i].done) {
-                S.planItems[i].done = true;
-                addXP(15, "Task Done!", "Great study habit.");
-            } else {
-                S.planItems[i].done = false;
-            }
-            break;
-        }
-    }
-    renderPlan();
-}
-
-// --- CHECKIN ---
-var curMood = null;
-function selMood(btn) {
-    var btns = btn.parentElement.children;
-    for(var i=0; i<btns.length; i++) btns[i].classList.remove('active');
-    btn.classList.add('active');
-    curMood = btn.innerText.replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, '').trim(); // rough text extract
-}
-function logCheckin() {
-    S.streak++;
-    if(S.streak > S.bestStreak) S.bestStreak = S.streak;
-    S.checkins++;
-    el('ci-streak').innerText = S.streak;
-    addXP(10, "Checked In!", "Consistency is key.");
-    
-    // reset pills
-    var pills = document.querySelectorAll('.reason-pill');
-    for(var i=0; i<pills.length; i++) pills[i].classList.remove('active');
-    var moods = document.querySelectorAll('.mood-btn');
-    for(var j=0; j<moods.length; j++) moods[j].classList.remove('active');
-    curMood = null;
-}
-
-// --- CATCHUPS ---
-function renderCatchups() {
-    var c = CAREERS[S.career];
-    var html = '';
-    for(var i=0; i<c.catchups.length; i++) {
-        var cu = c.catchups[i];
-        var state = S.aiStates[cu.id] || 'idle';
-        var isDone = S.doneCatchups[cu.id];
-        
-        html += '<div class="cu-item" id="cu-wrap-'+cu.id+'">';
-        html += '<div class="cu-hdr"><div class="cu-title">'+cu.name+(isDone?' ✓':'')+'</div><div class="cu-dur">'+cu.dur+'</div></div>';
-        
-        if(isDone) {
-            html += '<div style="font-size:12px; color:var(--green); font-weight:bold;">Completed. Notes summarized.</div>';
-        } else if(state === 'idle') {
-            html += '<button class="btn" style="background:'+c.light+'; color:'+c.dark+';" onclick="startCatchup(\''+cu.id+'\')">Start Catch-up</button>';
-        } else if(state === 'upload') {
-            html += '<div class="cu-upload" onclick="trigUpload(\''+cu.id+'\')">';
-            html += '<div style="font-size:24px; margin-bottom:8px;">📄</div>';
-            html += '<div style="font-weight:bold; font-size:14px; margin-bottom:4px;">Upload class notes</div>';
-            html += '<div style="font-size:11px; color:var(--text-muted)">PDF, Word, or Images accepted</div>';
-            html += '</div>';
-        } else if(state === 'thinking') {
-            html += '<div class="cu-spin"></div>';
-            html += '<div style="text-align:center; font-size:12px; color:var(--med-purple); font-weight:bold;">Claude is reading your notes and building your lesson...</div>';
-        } else if(state === 'lesson' || state === 'quiz') {
-            var data = S.aiStates[cu.id+'_data'];
-            html += '<div class="lesson-block">';
-            html += '<div class="lb-hdr"><span>⭐</span> '+data.topic+'</div>';
-            html += '<div class="lb-body">';
-            html += '<h4>Overview</h4><p>'+data.summary+'</p>';
-            html += '<h4>Key Points</h4><ul>';
-            for(var k=0; k<data.keyPoints.length; k++) html += '<li>'+data.keyPoints[k]+'</li>';
-            html += '</ul>';
-            html += '<h4>Deep Dive</h4><p>'+data.deepDive+'</p>';
-            html += '<div class="lb-career"><b>Career Connection:</b> '+data.careerLink+'</div>';
-            html += '</div></div>';
-            
-            if(state === 'lesson') {
-                html += '<button class="btn btn-primary" style="margin-top:16px;" onclick="startQuiz(\''+cu.id+'\')">Take the quiz</button>';
-            } else {
-                var qidx = S.aiStates[cu.id+'_qidx'] || 0;
-                var qData = data.quiz[qidx];
-                html += '<div class="quiz-q">Q'+(qidx+1)+': '+qData.question+'</div>';
-                for(var o=0; o<qData.options.length; o++) {
-                    html += '<div class="quiz-opt" id="opt-'+cu.id+'-'+o+'" onclick="selOpt(\''+cu.id+'\', '+o+')">'+qData.options[o]+'</div>';
-                }
-                html += '<button class="btn btn-primary" style="margin-top:16px;" id="btn-sub-'+cu.id+'" disabled onclick="subQuiz(\''+cu.id+'\')">Submit Answer</button>';
-                html += '<div id="res-'+cu.id+'" class="quiz-res"></div>';
-            }
-        }
-        html += '</div>';
-    }
-    el('cu-list').innerHTML = html;
-}
-
-function startCatchup(id) {
-    S.aiStates[id] = 'upload';
-    renderCatchups();
-}
-
-var activeUploadId = null;
-function trigUpload(id) {
-    activeUploadId = id;
-    el('cu-file-input').click();
-}
-
-el('cu-file-input').addEventListener('change', function(e) {
-    if(e.target.files.length > 0 && activeUploadId) {
-        var id = activeUploadId;
-        S.aiStates[id] = 'thinking';
-        renderCatchups();
-        
-        var cuObj = CAREERS[S.career].catchups.find(function(c){return c.id===id;});
-        
-        // Use reader just to simulate delay and read
-        var reader = new FileReader();
-        reader.onload = function(ev) {
-            runCatchupAPI(ev.target.result, cuObj.name, CAREERS[S.career].label, id);
+    <!-- JS State Engine & Interactive Mock Logic -->
+    <script>
+        // Application State
+        let state = {
+            currentTab: 'career',
+            selectedCareer: 'none',
+            xp: 120,
+            streak: 4,
+            // Present school days so far this month (day 10 left absent as an example to toggle)
+            claimedDays: [1, 2, 3, 4, 5, 8, 9, 11, 12, 15, 16, 17, 18, 19, 22],
+            uploadedNotes: false,
+            loadingAI: false,
+            quizAnswered: false,
+            completedTasks: [],
+            // Timetable feature
+            timetable: [],            // [{ id, day, subject, period }]
+            timetableDay: 'Mon',      // day currently being edited in the builder
+            timetableComplete: false, // true once AI has mapped the schedule
+            generatingTimetable: false,
+            showCustomInput: false    // "Other" subject input visible in the builder
         };
-        reader.readAsDataURL(e.target.files[0]);
-    }
-});
 
-async function runCatchupAPI(fileData, topic, careerStr, id) {
-    try {
-        var response = await fetch('https://api.anthropic.com/v1/messages', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-api-key': 'DEMO_KEY_NO_REAL_KEY_PROVIDED',
-                'anthropic-version': '2023-06-01',
-                'anthropic-dangerous-direct-browser-access': 'true'
-            },
-            body: JSON.stringify({
-                model: 'claude-sonnet-4-20250514',
-                max_tokens: 1500,
-                messages: [{role: "user", content: "Summarize this topic: " + topic + " for a " + careerStr}]
-            })
-        });
-        
-        if (!response.ok) throw new Error("API failed");
-        var data = await response.json();
-        // Fallback triggers on error, so we won't reach here without a valid key.
-    } catch(e) {
-        // FALLBACK LOGIC (Required by prompt if API fails for any reason)
-        setTimeout(function() {
-            var fallbackData = {
-                topic: topic,
-                summary: "This is a synthesized summary of the uploaded notes. The core concepts revolve around understanding the foundational principles of " + topic + " and applying them effectively.",
-                keyPoints: [
-                    "Identify the primary variables involved in " + topic + ".",
-                    "Understand the structural relationships between these variables.",
-                    "Apply the specific methodology outlined in the textbook.",
-                    "Evaluate outcomes based on standard metrics."
-                ],
-                deepDive: "A deeper look reveals that historical precedents heavily influence current practices in this area. Advanced application requires synthesizing multiple data points.",
-                careerLink: "As a future " + careerStr + ", mastering " + topic + " allows you to make informed, critical decisions in high-stakes environments.",
-                quiz: [
-                    { question: "What is the primary goal of " + topic + "?", options: ["To memorize facts", "To apply concepts critically", "To ignore variables", "To guess outcomes"], correct: 1 },
-                    { question: "Which step is crucial in the methodology?", options: ["Skipping basics", "Evaluating outcomes", "Working blindly", "Avoiding metrics"], correct: 1 },
-                    { question: "How does this connect to your career?", options: ["It makes decisions harder", "It relies solely on history", "It enables informed decisions", "It has no connection"], correct: 2 }
+        // XP needed per level (cumulative thresholds)
+        const LEVEL_STEP = 150;
+
+        // Calendar: June 2026 has 30 days and June 1 falls on a Monday (0 leading blanks).
+        // "Today" is June 23 — a Tuesday, matching the real current date.
+        const CAL_TODAY = 23;
+        const CAL_DAYS = 30;
+
+        // Expanded career database — reflects the v2 pivot to widen the path catalog
+        // so the gamification loop doesn't break when a student's dream job is missing.
+        const careerData = {
+            gameDev: {
+                title: "Video Game Developer", icon: "🎮", tag: "Coding, Engine Architecture, World-Building", accent: "indigo",
+                subjects: [
+                    { original: "Algebra & Geometry", reframed: "3D Coordinate Spaces & Physics Vectors", desc: "Essential for coding character movement, collision calculations, and lighting engines.", xp: "25" },
+                    { original: "English Literature", reframed: "Interactive Narrative Design & Scripting", desc: "Master dialogue loops, branching choices, and environmental storytelling mechanics.", xp: "20" },
+                    { original: "World History", reframed: "Historical World-Building & Lore Mechanics", desc: "Analyze historical structural frameworks to design realistic, immersive level economies.", xp: "20" }
                 ]
+            },
+            bioTech: {
+                title: "Bio-Medical Engineer", icon: "🧬", tag: "Prosthetics, AI Diagnosis, Cellular Logic", accent: "emerald",
+                subjects: [
+                    { original: "Algebra & Geometry", reframed: "Biostatistical Modeling & Fracture Mechanics", desc: "Calculate structural integrity metrics needed for engineering tissue scaffolding and implants.", xp: "25" },
+                    { original: "English Literature", reframed: "Technical Synthesis & Clinical Case Drafting", desc: "Learn to articulate complex operational guidelines for medical regulatory approvals clear of error.", xp: "20" },
+                    { original: "World History", reframed: "Evolution of Public Health Infrastructure", desc: "Track how historical pandemics directly influenced urbanization laws and engineering design.", xp: "20" }
+                ]
+            },
+            entrepreneur: {
+                title: "Digital Marketplace Founder", icon: "💸", tag: "Venture Scale, Product Design, Branding", accent: "amber",
+                subjects: [
+                    { original: "Algebra & Geometry", reframed: "Algorithmic Pricing & Customer Acquisition LTV", desc: "Model cohort data patterns to accurately compute lifetime asset valuations and pricing scales.", xp: "25" },
+                    { original: "English Literature", reframed: "Persuasive Copywriting & Seed Pitch Mechanics", desc: "Master the narrative architectures used to secure capital injections and craft high-conversion funnels.", xp: "20" },
+                    { original: "World History", reframed: "Macro Trade Route Disruptions & Monopolies", desc: "Evaluate structural system crashes from the past to target unprotected commercial market gaps.", xp: "20" }
+                ]
+            },
+            lawyer: {
+                title: "Trial Lawyer", icon: "⚖️", tag: "Litigation, Policy, Public Argument", accent: "rose",
+                subjects: [
+                    { original: "Algebra & Geometry", reframed: "Evidentiary Logic & Statistical Proof", desc: "Build airtight chains of reasoning and challenge the probability claims that win or lose a case.", xp: "25" },
+                    { original: "English Literature", reframed: "Rhetoric, Cross-Examination & Closing Arguments", desc: "Deconstruct persuasion and subtext to control a courtroom narrative under pressure.", xp: "20" },
+                    { original: "World History", reframed: "Constitutional Precedent & Landmark Rulings", desc: "Trace how historical conflicts forged the legal doctrines you'll argue from.", xp: "20" }
+                ]
+            },
+            doctor: {
+                title: "Emergency Physician", icon: "🩺", tag: "Diagnostics, Anatomy, Critical Care", accent: "sky",
+                subjects: [
+                    { original: "Algebra & Geometry", reframed: "Dosage Math & Vital-Sign Modeling", desc: "Compute drug concentrations and read the curves that separate stable from critical patients.", xp: "25" },
+                    { original: "English Literature", reframed: "Patient History Intake & Clinical Communication", desc: "Extract the real story from a frightened patient and document it without ambiguity.", xp: "20" },
+                    { original: "World History", reframed: "History of Medicine & Disease Eradication", desc: "Understand how breakthroughs and failures shaped modern treatment protocols.", xp: "20" }
+                ]
+            },
+            engineer: {
+                title: "Civil Engineer", icon: "🏗️", tag: "Structures, Cities, Sustainable Design", accent: "orange",
+                subjects: [
+                    { original: "Algebra & Geometry", reframed: "Load-Bearing Calculus & Structural Geometry", desc: "Run the force and stress calculations that keep bridges and towers standing.", xp: "25" },
+                    { original: "English Literature", reframed: "Technical Proposals & Safety Documentation", desc: "Write the clear specs and reports that get infrastructure approved and built safely.", xp: "20" },
+                    { original: "World History", reframed: "Engineering of Ancient & Modern Cities", desc: "Study how civilizations solved water, transport, and scale to design resilient systems today.", xp: "20" }
+                ]
+            }
+        };
+
+        // Accent color lookup so Tailwind's CDN keeps the classes (avoids dynamic purge issues)
+        const accentBg = { indigo: "bg-indigo-500/10", emerald: "bg-emerald-500/10", amber: "bg-amber-500/10", rose: "bg-rose-500/10", sky: "bg-sky-500/10", orange: "bg-orange-500/10" };
+
+        // What each professional ultimately does — used to make AI class connections feel tailored.
+        const careerMission = {
+            gameDev: "ship games players can't put down",
+            bioTech: "engineer devices that keep patients alive",
+            entrepreneur: "build a product the market actually pays for",
+            lawyer: "win arguments that hold up in court",
+            doctor: "make fast, correct calls under pressure",
+            engineer: "design structures a whole city can trust"
+        };
+
+        // The classes a student can drop into their timetable. Icon + the transferable
+        // "angle" each subject trains, which the AI mapper weaves into a career connection.
+        const subjectCatalog = {
+            "Algebra & Geometry":  { icon: "➗", angle: "quantitative modeling and pattern logic" },
+            "English Literature":  { icon: "📖", angle: "narrative, persuasion, and close reading" },
+            "World History":       { icon: "🌍", angle: "systems thinking across cause and effect" },
+            "Biology":             { icon: "🧫", angle: "living systems and the experimental method" },
+            "Chemistry":           { icon: "⚗️", angle: "reactions, ratios, and how materials behave" },
+            "Physics":             { icon: "🔭", angle: "forces, energy, and predictive math" },
+            "Computer Science":    { icon: "💻", angle: "logic, algorithms, and automation" },
+            "Spanish":             { icon: "🗣️", angle: "cross-cultural communication" },
+            "Economics":           { icon: "📈", angle: "incentives, markets, and trade-offs" },
+            "Art & Design":        { icon: "🎨", angle: "visual composition and rapid iteration" },
+            "Physical Education":  { icon: "🏃", angle: "discipline, recovery, and peak performance" }
+        };
+        const SUBJECT_PALETTE = Object.keys(subjectCatalog);
+        const WEEK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+
+        // Icon lookup with a fallback for custom ("Other") subjects not in the catalog.
+        function subjectIcon(subject) {
+            return (subjectCatalog[subject] && subjectCatalog[subject].icon) || "📘";
+        }
+
+        // The "AI" mapper: given a class + chosen major, return how that class feeds the goal.
+        // Rich, hand-written reframes win when available; otherwise a tailored template fills in.
+        function relateClassToMajor(subject, careerKey) {
+            const career = careerData[careerKey];
+            const cat = subjectCatalog[subject] || { icon: "📘", angle: "core academic skills" };
+            const override = career.subjects.find(s => s.original === subject);
+            if (override) {
+                return { icon: cat.icon, reframed: override.reframed, desc: override.desc, xp: override.xp };
+            }
+            return {
+                icon: cat.icon,
+                reframed: `${subject} → ${career.title} Toolkit`,
+                desc: `${subject} builds ${cat.angle} — the exact foundation a ${career.title} leans on to ${careerMission[careerKey]}.`,
+                xp: "15"
             };
-            S.aiStates[id] = 'lesson';
-            S.aiStates[id+'_data'] = fallbackData;
-            S.aiStates[id+'_qidx'] = 0;
-            S.aiStates[id+'_score'] = 0;
-            renderCatchups();
-        }, 1500); // simulate API delay
-    }
-}
+        }
 
-function startQuiz(id) {
-    S.aiStates[id] = 'quiz';
-    renderCatchups();
-}
+        // Collapse the timetable into one entry per unique subject, remembering which days it meets.
+        function groupTimetableBySubject() {
+            const map = {};
+            state.timetable.forEach(c => {
+                if (!map[c.subject]) map[c.subject] = { subject: c.subject, days: [] };
+                if (!map[c.subject].days.includes(c.day)) map[c.subject].days.push(c.day);
+            });
+            return Object.values(map).map(s => ({
+                ...s,
+                days: s.days.sort((a, b) => WEEK_DAYS.indexOf(a) - WEEK_DAYS.indexOf(b))
+            }));
+        }
 
-var selO = null;
-function selOpt(id, optIdx) {
-    selO = optIdx;
-    var opts = document.querySelectorAll('[id^="opt-'+id+'-"]');
-    for(var i=0; i<opts.length; i++) opts[i].classList.remove('sel');
-    el('opt-'+id+'-'+optIdx).classList.add('sel');
-    el('btn-sub-'+id).disabled = false;
-}
+        // ---------- Feedback helpers (replace native alert popups) ----------
+        function showToast(msg, emoji = "✨") {
+            const layer = document.getElementById('toast-layer');
+            const el = document.createElement('div');
+            el.className = "absolute bottom-28 left-1/2 bg-slate-800 border border-slate-600 text-slate-100 text-xs font-semibold px-4 py-2.5 rounded-xl shadow-2xl flex items-center space-x-2";
+            el.style.transform = "translateX(-50%)";
+            el.style.animation = "toastIn 0.3s ease-out";
+            el.innerHTML = `<span class="text-base">${emoji}</span><span>${msg}</span>`;
+            layer.appendChild(el);
+            setTimeout(() => { el.style.animation = "toastOut 0.3s ease-in forwards"; }, 1800);
+            setTimeout(() => el.remove(), 2200);
+        }
 
-function subQuiz(id) {
-    if(selO === null) return;
-    var data = S.aiStates[id+'_data'];
-    var qidx = S.aiStates[id+'_qidx'];
-    var correct = data.quiz[qidx].correct;
-    
-    var opts = document.querySelectorAll('[id^="opt-'+id+'-"]');
-    for(var i=0; i<opts.length; i++) {
-        opts[i].style.pointerEvents = 'none';
-        if(i === correct) opts[i].classList.add('corr');
-        else if(i === selO) opts[i].classList.add('wrong');
-    }
-    
-    if(selO === correct) S.aiStates[id+'_score']++;
-    
-    var btn = el('btn-sub-'+id);
-    btn.innerText = "Next";
-    btn.onclick = function() { nextQuiz(id); };
-}
+        function floatXP(amount) {
+            const layer = document.getElementById('toast-layer');
+            const el = document.createElement('div');
+            el.className = "absolute top-24 left-1/2 text-amber-400 font-extrabold text-lg";
+            el.style.transform = "translateX(-50%)";
+            el.style.animation = "xpFloat 1.1s ease-out forwards";
+            el.innerText = `+${amount} XP`;
+            layer.appendChild(el);
+            setTimeout(() => el.remove(), 1100);
+        }
 
-function nextQuiz(id) {
-    selO = null;
-    var data = S.aiStates[id+'_data'];
-    S.aiStates[id+'_qidx']++;
-    
-    if(S.aiStates[id+'_qidx'] >= data.quiz.length) {
-        var score = S.aiStates[id+'_score'];
-        var tot = data.quiz.length;
-        var pct = score / tot;
-        var xp = pct === 1 ? 60 : (pct >= 0.67 ? 50 : 40);
-        
-        S.doneCatchups[id] = true;
-        S.aiStates[id] = 'done';
-        
-        addXP(xp, "Catch-up Complete!", "You scored " + score + "/" + tot);
-        renderCatchups();
-    } else {
-        renderCatchups();
-    }
-}
+        function confettiBurst() {
+            const layer = document.getElementById('toast-layer');
+            const colors = ["#a78bfa", "#34d399", "#fbbf24", "#60a5fa", "#f472b6"];
+            for (let i = 0; i < 18; i++) {
+                const p = document.createElement('div');
+                const size = 6 + Math.floor(Math.random() * 6);
+                p.style.position = "absolute";
+                p.style.top = "90px";
+                p.style.left = (40 + Math.random() * 320) + "px";
+                p.style.width = size + "px";
+                p.style.height = size + "px";
+                p.style.background = colors[i % colors.length];
+                p.style.borderRadius = (Math.random() > 0.5 ? "50%" : "2px");
+                p.style.opacity = "1";
+                p.style.animation = `confettiFall ${0.8 + Math.random() * 0.6}s ease-in forwards`;
+                layer.appendChild(p);
+                setTimeout(() => p.remove(), 1500);
+            }
+        }
 
-// --- PROFILE ---
-function renderProfile() {
-    var c = CAREERS[S.career];
-    el('prof-av').innerText = S.career ? CAREERS[S.career].label.charAt(0) : "A";
-    
-    var tHtml = '';
-    var currIdx = Math.min(Math.floor(S.xp / 1000), c.stages.length - 1);
-    for(var i=0; i<c.stages.length; i++) {
-        var st = c.stages[i];
-        var isDone = i < currIdx;
-        var isCurr = i === currIdx;
-        var cls = isCurr ? 'curr' : (isDone ? 'done' : '');
-        var col = isDone || isCurr ? c.accent : 'var(--text-muted)';
-        
-        tHtml += '<div class="tl-item '+cls+'" style="color:'+col+'">';
-        tHtml += '<div class="tl-dot"></div>';
-        tHtml += '<div class="tl-lbl">'+st+(isCurr?'<span class="tl-here">&larr; you are here</span>':'')+'</div>';
-        tHtml += '</div>';
-    }
-    el('prof-timeline').innerHTML = tHtml;
-    
-    var cHtml = '';
-    for(var j=0; j<S.courses.length; j++) {
-        var crs = S.courses[j];
-        var days = [];
-        for(var d in crs.days) { if(crs.days[d]) days.push(d); }
-        cHtml += '<div style="display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px solid var(--border); padding-bottom:8px;">';
-        cHtml += '<b>'+crs.name+'</b> <span style="color:var(--text-muted)">'+(days.join(', ')||'No days set')+'</span>';
-        cHtml += '</div>';
-    }
-    el('prof-courses').innerHTML = cHtml;
-}
+        // Award XP in one place so level + headers + float animation stay in sync
+        function awardXP(amount, { silent = false } = {}) {
+            const prevLevel = Math.floor(state.xp / LEVEL_STEP) + 1;
+            state.xp += amount;
+            const newLevel = Math.floor(state.xp / LEVEL_STEP) + 1;
+            if (!silent && amount > 0) floatXP(amount);
+            if (newLevel > prevLevel) {
+                setTimeout(() => { confettiBurst(); showToast(`Level up! You reached Level ${newLevel}`, "🏆"); }, 300);
+            }
+        }
 
-</script>
+        // ---------- Render Routing Engine ----------
+        function render() {
+            const container = document.getElementById('screen-content');
+
+            // Update Headers
+            document.getElementById('xp-display').innerText = `${state.xp} XP`;
+            document.getElementById('streak-display').innerText = `${state.streak} Days`;
+
+            // Level bar
+            const level = Math.floor(state.xp / LEVEL_STEP) + 1;
+            const intoLevel = state.xp % LEVEL_STEP;
+            document.getElementById('level-label').innerText = `LVL ${level}`;
+            document.getElementById('level-next').innerText = `to LVL ${level + 1}`;
+            document.getElementById('level-bar').style.width = `${(intoLevel / LEVEL_STEP) * 100}%`;
+
+            if (state.selectedCareer !== 'none') {
+                document.getElementById('current-career-badge').innerText = `Path: ${careerData[state.selectedCareer].title}`;
+            } else {
+                document.getElementById('current-career-badge').innerText = 'Select a Dream Path';
+            }
+
+            // Catch-up ping only matters before notes are processed
+            document.getElementById('catchup-ping').style.display = state.uploadedNotes ? 'none' : 'block';
+
+            // Update Active Navigation Highlight
+            ['career', 'calendar', 'study', 'catchup'].forEach(tab => {
+                const navBtn = document.getElementById(`nav-${tab}`);
+                if (tab === state.currentTab) {
+                    navBtn.className = "flex flex-col items-center space-y-1 text-purple-400 font-bold scale-105 transition-all";
+                } else {
+                    navBtn.className = "flex flex-col items-center space-y-1 text-slate-500 hover:text-slate-300 transition-all";
+                }
+            });
+
+            // Route Screen Layouts
+            if (state.currentTab === 'career') renderCareer(container);
+            else if (state.currentTab === 'calendar') renderCalendar(container);
+            else if (state.currentTab === 'study') renderStudy(container);
+            else if (state.currentTab === 'catchup') renderCatchup(container);
+        }
+
+        function renderCareer(container) {
+            if (state.selectedCareer === 'none') {
+                const cards = Object.entries(careerData).map(([key, d]) => `
+                    <button onclick="selectCareer('${key}')" class="w-full bg-slate-800 hover:bg-slate-700/80 border border-slate-700 p-4 rounded-2xl flex items-center space-x-4 transition text-left group">
+                        <div class="text-3xl ${accentBg[d.accent]} p-3 rounded-xl group-hover:scale-110 transition">${d.icon}</div>
+                        <div>
+                            <h3 class="font-bold text-sm text-white">${d.title}</h3>
+                            <p class="text-xs text-slate-400">${d.tag}</p>
+                        </div>
+                    </button>
+                `).join('');
+
+                container.innerHTML = `
+                    <div class="space-y-4 animate-fadeIn">
+                        <div class="text-center py-4">
+                            <span class="text-4xl">✨</span>
+                            <h2 class="text-xl font-extrabold text-white mt-2">What's your dream move?</h2>
+                            <p class="text-xs text-slate-400 mt-1">Pick a field. We'll map your current high school classes to its professional requirements.</p>
+                        </div>
+                        <div class="space-y-3">${cards}</div>
+                        <p class="text-[10px] text-slate-600 text-center pt-2">Don't see your dream? More paths are being added every week.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Career chosen → route through the timetable sub-flow
+            if (state.generatingTimetable) { renderTimetableLoading(container); return; }
+            if (!state.timetableComplete) { renderTimetableBuilder(container); return; }
+            renderCurriculumMap(container);
+        }
+
+        // Shared banner for every selected-career sub-screen
+        function careerBanner(actionLabel, actionFn) {
+            const data = careerData[state.selectedCareer];
+            return `
+                <div class="flex justify-between items-center bg-slate-800/50 p-3 rounded-xl border border-slate-800">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xl">${data.icon}</span>
+                        <span class="text-xs font-bold text-slate-200">${data.title} Path</span>
+                    </div>
+                    <button onclick="${actionFn}" class="text-[10px] text-purple-400 hover:underline">${actionLabel}</button>
+                </div>
+            `;
+        }
+
+        // STEP 1 — Build the weekly timetable
+        function renderTimetableBuilder(container) {
+            const data = careerData[state.selectedCareer];
+            const dayClasses = state.timetable.filter(c => c.day === state.timetableDay);
+            const total = state.timetable.length;
+
+            const dayPills = WEEK_DAYS.map(d => {
+                const count = state.timetable.filter(c => c.day === d).length;
+                const active = d === state.timetableDay;
+                return `
+                    <button onclick="setTimetableDay('${d}')" class="flex-1 py-2 rounded-lg text-[11px] font-bold transition-all ${active ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}">
+                        ${d}${count ? `<span class="block text-[9px] font-medium ${active ? 'text-purple-200' : 'text-slate-500'}">${count} class${count > 1 ? 'es' : ''}</span>` : ''}
+                    </button>
+                `;
+            }).join('');
+
+            const palette = SUBJECT_PALETTE.map(sub => {
+                const already = dayClasses.some(c => c.subject === sub);
+                return `
+                    <button onclick="toggleClass('${sub.replace(/'/g, "\\'")}')" title="${already ? 'Tap to remove' : 'Tap to add'}"
+                        class="text-left px-3 py-2 rounded-lg border text-[11px] font-semibold flex items-center space-x-2 transition active:scale-95 ${already ? 'bg-emerald-950/30 border-emerald-500/40 text-emerald-400 hover:border-rose-500/50' : 'bg-slate-900 border-slate-700 text-slate-300 hover:border-purple-500'}">
+                        <span>${subjectCatalog[sub].icon}</span>
+                        <span class="flex-1 leading-tight">${sub}</span>
+                        <span class="text-sm group">${already ? '✓' : '+'}</span>
+                    </button>
+                `;
+            }).join('');
+
+            // "Other" — let students add a subject that isn't in the preset palette
+            const otherSection = state.showCustomInput ? `
+                <div class="flex space-x-2 mt-2">
+                    <input id="custom-subject-input" type="text" placeholder="e.g. Psychology, Music Theory"
+                        onkeydown="if(event.key==='Enter')addCustomClass()"
+                        class="flex-1 bg-slate-900 border border-slate-700 focus:border-purple-500 outline-none rounded-lg px-3 py-2 text-[11px] text-white placeholder-slate-600">
+                    <button onclick="addCustomClass()" class="px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-[11px] font-bold active:scale-95 transition">Add</button>
+                </div>
+            ` : `
+                <button onclick="toggleCustomInput()" class="w-full mt-2 px-3 py-2 rounded-lg border border-dashed border-slate-600 text-slate-400 hover:border-purple-500 hover:text-purple-300 text-[11px] font-semibold flex items-center justify-center space-x-1.5 transition active:scale-95">
+                    <span>➕</span><span>Other subject</span>
+                </button>
+            `;
+
+            const dayList = dayClasses.length ? dayClasses.map(c => `
+                <div class="flex items-center justify-between bg-slate-800/70 border border-slate-700/60 rounded-lg px-3 py-2">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-[9px] font-bold text-slate-500 w-12">Period ${c.period}</span>
+                        <span>${subjectIcon(c.subject)}</span>
+                        <span class="text-xs font-semibold text-white">${c.subject}</span>
+                    </div>
+                    <button onclick="removeClass('${c.id}')" class="text-slate-500 hover:text-rose-400 text-sm leading-none px-1">✕</button>
+                </div>
+            `).join('') : `<p class="text-[11px] text-slate-500 text-center py-3">No classes added for ${state.timetableDay} yet — tap a subject above.</p>`;
+
+            container.innerHTML = `
+                <div class="space-y-4 animate-fadeIn">
+                    ${careerBanner('Change Path', "selectCareer('none')")}
+
+                    <div>
+                        <h2 class="text-base font-extrabold text-white">Add your class timetable</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Pick a day, tap the classes you take. Claude will map each one to your <span class="text-purple-400 font-semibold">${data.title}</span> goal.</p>
+                    </div>
+
+                    <div class="flex space-x-1.5">${dayPills}</div>
+
+                    <div>
+                        <p class="text-[10px] font-bold uppercase text-slate-500 tracking-wider mb-2">Tap to add to ${state.timetableDay} <span class="text-slate-600 normal-case font-medium">· tap again to remove</span></p>
+                        <div class="grid grid-cols-2 gap-2">${palette}</div>
+                        ${otherSection}
+                    </div>
+
+                    <div>
+                        <p class="text-[10px] font-bold uppercase text-slate-500 tracking-wider mb-2">${state.timetableDay}'s schedule</p>
+                        <div class="space-y-1.5">${dayList}</div>
+                    </div>
+
+                    <button onclick="generateTimetable()" ${total === 0 ? 'disabled' : ''}
+                        class="w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center space-x-2 ${total === 0 ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg shadow-purple-500/20 active:scale-95'}">
+                        <span>✨</span>
+                        <span>${total === 0 ? 'Add at least one class' : `Map ${total} class${total > 1 ? 'es' : ''} with AI`}</span>
+                    </button>
+                </div>
+            `;
+        }
+
+        // STEP 2 — AI "thinking" state
+        function renderTimetableLoading(container) {
+            const data = careerData[state.selectedCareer];
+            container.innerHTML = `
+                <div class="h-full flex flex-col items-center justify-center py-24 space-y-4 animate-fadeIn">
+                    <div class="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                    <div class="text-center">
+                        <h3 class="text-sm font-bold text-white">Mapping your week to ${data.title}...</h3>
+                        <p class="text-xs text-slate-400 mt-1">Claude is connecting each class topic to your future career.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        // STEP 3 — Personalized curriculum map, built from the student's real timetable
+        function renderCurriculumMap(container) {
+            const data = careerData[state.selectedCareer];
+            const grouped = groupTimetableBySubject();
+
+            const cards = grouped.map(g => {
+                const rel = relateClassToMajor(g.subject, state.selectedCareer);
+                const dayTags = g.days.map(d => `<span class="text-[9px] bg-slate-700/60 text-slate-300 px-1.5 py-0.5 rounded font-semibold">${d}</span>`).join(' ');
+                return `
+                    <div class="bg-gradient-to-r from-slate-800 to-slate-900 border border-slate-700/60 rounded-xl p-4 shadow-sm relative overflow-hidden">
+                        <div class="absolute top-0 right-0 bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded-bl text-[9px] font-bold">+${rel.xp} XP / Class</div>
+                        <div class="flex items-center space-x-2 mb-1">
+                            <span class="text-base">${rel.icon}</span>
+                            <p class="text-[10px] text-purple-400 font-bold uppercase tracking-wider">${g.subject}</p>
+                        </div>
+                        <h3 class="font-bold text-sm text-white">${rel.reframed}</h3>
+                        <p class="text-xs text-slate-400 mt-1.5 leading-relaxed">${rel.desc}</p>
+                        <div class="flex items-center space-x-1 mt-2">${dayTags}</div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = `
+                <div class="space-y-4 animate-fadeIn">
+                    ${careerBanner('Change Path', "selectCareer('none')")}
+
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h2 class="text-base font-extrabold text-white">Your Curriculum Map</h2>
+                            <p class="text-xs text-slate-400 mt-0.5">${grouped.length} classes mapped to your goal.</p>
+                        </div>
+                        <button onclick="editTimetable()" class="text-[10px] bg-slate-800 border border-slate-700 px-2.5 py-1.5 rounded-lg text-slate-300 hover:border-purple-500 transition">✏️ Edit timetable</button>
+                    </div>
+
+                    <div class="bg-purple-950/20 border border-purple-500/20 rounded-xl p-3 flex items-start space-x-2">
+                        <span class="text-sm">🤖</span>
+                        <p class="text-[11px] text-purple-200 leading-relaxed">Claude analyzed your timetable and reframed each class as a direct step toward becoming a <span class="font-bold">${data.title}</span>.</p>
+                    </div>
+
+                    <div class="space-y-3">${cards}</div>
+                </div>
+            `;
+        }
+
+        function renderCalendar(container) {
+            container.innerHTML = `
+                <div class="space-y-4 animate-fadeIn">
+                    <div class="bg-gradient-to-r from-indigo-900/40 to-purple-900/40 border border-purple-500/20 p-4 rounded-2xl text-center">
+                        <p class="text-xs text-purple-300 font-semibold">🔥 Continuous Attendance Modifier Active</p>
+                        <h3 class="text-lg font-black text-white mt-1">1.5x Multiplier Week</h3>
+                        <p class="text-[10px] text-slate-400 mt-0.5">Log daily attendance live to preserve your active multiplier</p>
+                    </div>
+
+                    <div class="bg-slate-800/80 rounded-2xl p-4 border border-slate-700/60">
+                        <div class="flex justify-between items-center mb-3">
+                            <h3 class="text-xs font-bold uppercase text-slate-400 tracking-wider">June 2026</h3>
+                            <div class="flex space-x-3 items-center">
+                                <div class="flex space-x-1 items-center"><span class="w-2 h-2 bg-emerald-500 rounded-full"></span><span class="text-[10px] text-slate-400 font-medium">Present</span></div>
+                                <div class="flex space-x-1 items-center"><span class="w-2 h-2 bg-purple-500 rounded-full"></span><span class="text-[10px] text-slate-400 font-medium">Today</span></div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-7 gap-2 text-center text-xs font-bold text-slate-400 mb-1">
+                            <div>M</div><div>T</div><div>W</div><div>T</div><div>F</div><div>S</div><div>S</div>
+                        </div>
+                        <div class="grid grid-cols-7 gap-1.5 text-center">
+                            ${Array.from({ length: CAL_DAYS }, (_, i) => {
+                                const day = i + 1;            // June 1 = Monday → no leading blanks
+                                const dow = i % 7;            // 0 = Mon ... 5 = Sat, 6 = Sun
+                                const isWeekend = dow >= 5;
+                                const isPresent = state.claimedDays.includes(day);
+                                const isToday = day === CAL_TODAY;
+                                const isFuture = day > CAL_TODAY;
+                                let cls, label = `${day}`, clickable = false;
+
+                                if (isWeekend) {
+                                    cls = "text-slate-500/70";                                                  // no school
+                                } else if (isFuture) {
+                                    cls = "bg-slate-800/40 text-slate-500 border border-slate-700/40";          // not yet
+                                } else if (isToday) {
+                                    clickable = true;
+                                    if (isPresent) { cls = "bg-emerald-500 text-white font-black shadow-lg shadow-emerald-500/20"; label = "✓"; }
+                                    else { cls = "bg-purple-600 text-white font-extrabold animate-pulse ring-2 ring-purple-400 shadow-lg shadow-purple-500/30"; }
+                                } else {                                                                        // past school day — correctable
+                                    clickable = true;
+                                    cls = isPresent
+                                        ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold"
+                                        : "bg-slate-800/60 text-slate-300 border border-slate-700/50";
+                                }
+
+                                return `
+                                    <button ${clickable ? `onclick="toggleAttendance(${day})"` : 'disabled'} class="h-9 rounded-lg flex items-center justify-center text-xs font-bold transition-all active:scale-95 ${clickable ? 'cursor-pointer' : 'cursor-default'} ${cls}">
+                                        ${label}
+                                    </button>
+                                `;
+                            }).join('')}
+                        </div>
+                        <p class="text-[10px] text-slate-400 text-center mt-3">${state.claimedDays.includes(CAL_TODAY)
+                            ? 'Attendance confirmed for today. Multiplier preserved! 🔥'
+                            : `Tap <span class="text-purple-400 font-bold">today (June ${CAL_TODAY})</span> to confirm attendance. Tap any past weekday to correct it.`}</p>
+                    </div>
+
+                    <div class="bg-slate-800/40 border border-slate-800 rounded-xl p-3 flex justify-between items-center">
+                        <div>
+                            <h4 class="text-xs font-bold text-white">Tomorrow's High-Value Objective</h4>
+                            <p class="text-[10px] text-slate-400 mt-0.5">Physics Lab Exam Setup (+50 XP)</p>
+                        </div>
+                        <span class="text-xl">🛡️</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderStudy(container) {
+            const tasks = [
+                { id: 't1', title: 'Review 3D Vector Math Concept Sheet', sub: 'Calculus Connection', duration: '12 min' },
+                { id: 't2', title: 'Complete World-Building Narrative Paragraph', sub: 'Literature Composition', duration: '15 min' }
+            ];
+            const doneCount = tasks.filter(t => state.completedTasks.includes(t.id)).length;
+
+            container.innerHTML = `
+                <div class="space-y-4 animate-fadeIn">
+                    <div>
+                        <h2 class="text-base font-extrabold text-white">Today's Micro-Study Plan</h2>
+                        <p class="text-xs text-slate-400 mt-0.5">Automated chunking configured to actively avoid burnout cycles.</p>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <div class="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
+                            <div class="h-full bg-emerald-500 rounded-full transition-all duration-500" style="width: ${(doneCount / tasks.length) * 100}%"></div>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-400">${doneCount}/${tasks.length}</span>
+                    </div>
+
+                    <div class="space-y-2">
+                        ${tasks.map(t => {
+                            const isDone = state.completedTasks.includes(t.id);
+                            return `
+                                <div onclick="toggleTask('${t.id}')" class="bg-slate-800/60 border ${isDone ? 'border-emerald-500/40 bg-emerald-950/10' : 'border-slate-700/50'} p-3 rounded-xl flex items-center justify-between cursor-pointer hover:bg-slate-800 transition">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-5 h-5 rounded-md border ${isDone ? 'bg-emerald-500 border-emerald-500' : 'border-slate-500'} flex items-center justify-center text-xs text-slate-900 font-bold">
+                                            ${isDone ? '✓' : ''}
+                                        </div>
+                                        <div>
+                                            <h4 class="text-xs font-bold ${isDone ? 'text-slate-400 line-through' : 'text-white'}">${t.title}</h4>
+                                            <p class="text-[10px] text-slate-500">${t.sub}</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-[10px] bg-slate-900 px-2 py-0.5 rounded border border-slate-700 text-slate-400 font-medium">${t.duration}</span>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <div class="bg-slate-900 border border-dashed border-slate-700 p-4 rounded-xl text-center">
+                        <span class="text-xl">🏝️</span>
+                        <h4 class="text-xs font-bold text-slate-300 mt-1">Daily Cap Reached Beyond This Block</h4>
+                        <p class="text-[10px] text-slate-500 mt-0.5">The system locks deeper study access to prevent mental exhaustion.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderCatchup(container) {
+            if (state.loadingAI) {
+                container.innerHTML = `
+                    <div class="h-full flex flex-col items-center justify-center py-20 space-y-4 animate-fadeIn">
+                        <div class="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                        <div class="text-center">
+                            <h3 class="text-sm font-bold text-white">Claude Parsing Machine Online...</h3>
+                            <p class="text-xs text-slate-400 mt-1">Transcribing handwritten inputs & engineering study shortcuts.</p>
+                        </div>
+                    </div>
+                `;
+            } else if (!state.uploadedNotes) {
+                container.innerHTML = `
+                    <div class="space-y-4 animate-fadeIn">
+                        <div class="text-center py-4 bg-purple-950/20 border border-purple-500/20 rounded-2xl p-4">
+                            <span class="text-3xl">🩹</span>
+                            <h2 class="text-sm font-bold text-white mt-2">Missed a Class Session? No Stress.</h2>
+                            <p class="text-xs text-slate-400 mt-1">Upload an image of a classmate's binder notes. We'll digest the tracking points instantly.</p>
+                        </div>
+
+                        <div onclick="simulateUpload()" class="border-2 border-dashed border-slate-700 hover:border-purple-500/50 transition bg-slate-800/30 rounded-2xl p-8 flex flex-col items-center justify-center space-y-2 cursor-pointer group">
+                            <span class="text-2xl group-hover:scale-110 transition">📸</span>
+                            <span class="text-xs font-bold text-slate-300">Snap or Upload Notes File</span>
+                            <span class="text-[10px] text-slate-500">Supports PNG, JPEG, HEIC</span>
+                        </div>
+                    </div>
+                `;
+            } else {
+                const answerStateA = state.quizAnswered
+                    ? 'border-emerald-500 bg-emerald-950/20 text-emerald-300'
+                    : 'border-slate-700 hover:border-purple-500';
+                container.innerHTML = `
+                    <div class="space-y-4 animate-fadeIn">
+                        <div class="bg-emerald-950/20 border border-emerald-500/20 rounded-xl p-3 flex items-center space-x-3">
+                            <span class="text-lg">✅</span>
+                            <div>
+                                <h4 class="text-xs font-bold text-white">Processing Complete</h4>
+                                <p class="text-[10px] text-slate-400">Class: Calculus Vectors (June 22)</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-800/80 rounded-xl p-4 border border-slate-700/60 space-y-2">
+                            <h3 class="text-xs font-bold uppercase text-purple-400 tracking-wider">Automated Summary</h3>
+                            <h4 class="text-sm font-bold text-white">Dot Product Projection Engines</h4>
+                            <p class="text-xs text-slate-300 leading-relaxed">
+                                The dot product determines the directional alignment between two distinct vector paths. In production workflows, this dictates light rendering values striking structural meshes. If the result equals 0, paths align perfectly perpendicular.
+                            </p>
+                        </div>
+
+                        <div class="bg-slate-800/80 rounded-xl p-4 border border-slate-700/60 space-y-3">
+                            <div class="flex justify-between items-center">
+                                <h3 class="text-xs font-bold uppercase text-amber-400 tracking-wider">Concept Alignment Check</h3>
+                                <span class="text-[10px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded font-bold">+15 XP</span>
+                            </div>
+                            <p class="text-xs font-bold text-white">If two paths have a dot product of zero, how will your lighting calculation engine react?</p>
+                            <div class="space-y-2">
+                                <button onclick="answerQuiz(true)" ${state.quizAnswered ? 'disabled' : ''} class="w-full text-left p-2.5 bg-slate-900 border ${answerStateA} rounded-lg text-xs font-medium transition">
+                                    A) Render total shadows (Perpendicular paths bypass light). ${state.quizAnswered ? '✓' : ''}
+                                </button>
+                                <button onclick="answerQuiz(false)" ${state.quizAnswered ? 'disabled' : ''} class="w-full text-left p-2.5 bg-slate-900 border border-slate-700 ${state.quizAnswered ? 'opacity-40' : 'hover:border-purple-500'} rounded-lg text-xs font-medium transition">
+                                    B) Mirror light output variables clean across assets.
+                                </button>
+                            </div>
+                            ${state.quizAnswered ? `
+                                <button onclick="resetCatchup()" class="w-full text-center text-[10px] text-purple-400 hover:underline pt-1">Process another set of notes →</button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // ---------- Interaction Controllers ----------
+        function switchTab(tabId) {
+            state.currentTab = tabId;
+            render();
+        }
+
+        function selectCareer(careerKey) {
+            state.selectedCareer = careerKey;
+            // Picking (or changing) a path always re-opens the timetable map for that major.
+            // Existing classes are kept so the same schedule can be re-mapped to a new goal.
+            state.timetableComplete = false;
+            state.currentTab = 'career';
+            if (careerKey !== 'none') {
+                showToast(`Path set: ${careerData[careerKey].title}`, careerData[careerKey].icon);
+            }
+            render();
+        }
+
+        // ----- Timetable builder controllers -----
+        let classIdCounter = 0;
+
+        function setTimetableDay(day) {
+            state.timetableDay = day;
+            render();
+        }
+
+        function addClass(subject) {
+            const day = state.timetableDay;
+            if (state.timetable.some(c => c.day === day && c.subject === subject)) return; // no dupes per day
+            const period = state.timetable.filter(c => c.day === day).length + 1;
+            state.timetable.push({ id: `c${classIdCounter++}`, day, subject, period });
+            render();
+        }
+
+        // Tap a palette chip to add it, tap again to remove it from the current day.
+        function toggleClass(subject) {
+            const existing = state.timetable.find(c => c.day === state.timetableDay && c.subject === subject);
+            if (existing) removeClass(existing.id);
+            else addClass(subject);
+        }
+
+        function toggleCustomInput() {
+            state.showCustomInput = !state.showCustomInput;
+            render();
+        }
+
+        function addCustomClass() {
+            const inp = document.getElementById('custom-subject-input');
+            if (!inp) return;
+            const name = inp.value.trim();
+            if (!name) return;
+            const day = state.timetableDay;
+            if (state.timetable.some(c => c.day === day && c.subject.toLowerCase() === name.toLowerCase())) {
+                showToast(`"${name}" is already on ${day}`, "⚠️");
+                return;
+            }
+            const period = state.timetable.filter(c => c.day === day).length + 1;
+            state.timetable.push({ id: `c${classIdCounter++}`, day, subject: name, period });
+            state.showCustomInput = false;
+            render();
+        }
+
+        function removeClass(id) {
+            const removed = state.timetable.find(c => c.id === id);
+            state.timetable = state.timetable.filter(c => c.id !== id);
+            // Renumber periods for that day so they stay sequential
+            if (removed) {
+                let p = 1;
+                state.timetable.filter(c => c.day === removed.day).forEach(c => { c.period = p++; });
+            }
+            render();
+        }
+
+        function generateTimetable() {
+            if (state.timetable.length === 0) return;
+            state.generatingTimetable = true;
+            render();
+            setTimeout(() => {
+                state.generatingTimetable = false;
+                state.timetableComplete = true;
+                awardXP(40);
+                showToast("Timetable mapped to your goal! +40 XP", "🗺️");
+                render();
+            }, 1700);
+        }
+
+        function editTimetable() {
+            state.timetableComplete = false;
+            render();
+        }
+
+        function toggleAttendance(day) {
+            const isWeekend = ((day - 1) % 7) >= 5;
+            if (isWeekend || day > CAL_TODAY) return;   // can't attend weekends or the future
+            const present = state.claimedDays.includes(day);
+            if (present) {
+                state.claimedDays = state.claimedDays.filter(d => d !== day);
+                if (day === CAL_TODAY) {                  // today is the live, gamified action
+                    awardXP(-30, { silent: true });
+                    state.streak = Math.max(0, state.streak - 1);
+                    showToast("Attendance removed for today", "↩️");
+                } else {
+                    showToast(`June ${day} marked absent`, "✕");
+                }
+            } else {
+                state.claimedDays.push(day);
+                if (day === CAL_TODAY) {
+                    awardXP(30);                          // standard 20 XP × 1.5 multiplier
+                    state.streak += 1;
+                    showToast(`Attendance confirmed! Streak now ${state.streak} days`, "🔥");
+                } else {
+                    showToast(`June ${day} marked present`, "✓");
+                }
+            }
+            render();
+        }
+
+        function simulateUpload() {
+            state.loadingAI = true;
+            render();
+            setTimeout(() => {
+                state.loadingAI = false;
+                state.uploadedNotes = true;
+                render();
+            }, 1500);
+        }
+
+        function answerQuiz(correct) {
+            if (state.quizAnswered) return;
+            if (correct) {
+                state.quizAnswered = true;
+                awardXP(15);
+                confettiBurst();
+                showToast("Correct! +15 XP added", "🎉");
+                render();
+            } else {
+                showToast("Not quite — try again!", "❌");
+            }
+        }
+
+        function resetCatchup() {
+            state.uploadedNotes = false;
+            state.quizAnswered = false;
+            render();
+        }
+
+        function toggleTask(id) {
+            if (state.completedTasks.includes(id)) {
+                state.completedTasks = state.completedTasks.filter(t => t !== id);
+                awardXP(-10, { silent: true });
+            } else {
+                state.completedTasks.push(id);
+                awardXP(10);
+                showToast("Task complete! +10 XP", "🎯");
+            }
+            render();
+        }
+
+        // Init Layout Execution
+        render();
+    </script>
 </body>
 </html>
